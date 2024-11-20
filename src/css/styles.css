@@ -24,3 +24,14 @@ body {
   filter: brightness(90%);
   cursor:grab;
 }
+
+.bluetooth-button {
+  display:flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items:center;
+  border: 2px solid black;
+  border-radius:5px;
+  gap:20px;
+  padding: 10px 25px;
+}
