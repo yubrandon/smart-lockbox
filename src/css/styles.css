@@ -1,9 +1,32 @@
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica,
     Arial, sans-serif;
-  margin: auto;
   max-width: 38rem;
-  padding: 1rem;
+}
+.container {
+  display:flex;
+  flex-direction:column;
+  padding:1rem 2rem;
+}
+
+.footer {
+  display:flex;
+  justify-content: flex-end;
+  align-items:center;
+  position:fixed;
+  bottom:0;
+  right:0;
+  margin:10px;
+}
+
+.indicator-div {
+  display:flex;
+  flex-direction: row;
+  justify-content: left;
+  padding:0 10px 10px 0;
+}
+.indicator-circle {
+  display:block;
 }
 
 .canvas-login-button {
@@ -14,13 +37,13 @@ body {
   align-items: center;
 
   border:2px solid black;
-  background-color: "#F3F3F3";
+  background-color: #F3F3F3;
   border-radius: 5px;
 
   gap:20px;
   padding:10px 25px;
 }
-.canvas-login-button:hover {
+.canvas-login-button:hover, .bluetooth-button:hover {
   filter: brightness(90%);
   cursor:grab;
 }
@@ -28,10 +51,12 @@ body {
 .bluetooth-button {
   display:flex;
   flex-direction: row;
-  justify-content: space-between;
+  justify-content: space-evenly;
   align-items:center;
   border: 2px solid black;
+  background-color: #B2CDFF;
   border-radius:5px;
+
   gap:20px;
   padding: 10px 25px;
 }

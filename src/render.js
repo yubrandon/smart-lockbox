@@ -2,11 +2,13 @@ const header = document.querySelector('.header');
 const content = document.querySelector('.content');
 const footer = document.querySelector('.footer');
 
-const text = document.createElement('h1');
+//test code
+/*const text = document.createElement('h1');
 text.innerText = "Hello World!";
-header.appendChild(text);
-//test code above
+header.appendChild(text);*/
 
+//function importing not working, use following searches to get to sections:
+// UI SECTION, MENU SECTION, CANVAS SECTION, BLUETOOTH SECTION
 //window.electron.loginMenu();
 
 
@@ -22,7 +24,7 @@ header.appendChild(text);
 //Clears content of a container - pass in header/content/footer
 function clear(parent) {
     if(content.hasChildNodes()) {
-        const del = document.querySelectorAll(`.${parent} > div`);
+        const del = document.querySelectorAll(parent > 'div');
         for(let i=0; i<del.length; i++) {
             content.removeChild(del[i]);
         }
@@ -32,29 +34,51 @@ function clear(parent) {
 //
 //  UI SECTION | MENU SECTION
 //
+
 //Used to update the status indicator for the box at the top
 //Call in Bluetooth connection procedure
 //Arguments: 0 for disconnected, 1 for unlocked, 2 for locked
 (function connectionIndicator(state) {
     clear(header);
     const connectionDiv = document.createElement('div');
-    const circle = document.createElement('div');
-    //create indicator
+    connectionDiv.classList.add('indicator-div');
+    const circle = document.createElement('canvas');
+    circle.classList.add('indicator-circle');
+
+    const X = 60;
+    const Y = 40;
+    circle.width = X;
+    circle.height = Y;
+
+    const ctx = circle.getContext("2d");
+    ctx.scale(X / Y, 1);
+    ctx.beginPath();
+    ctx.arc(X/4, Y/2, 5, 0, 2 * Math.PI);
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "black";
+    ctx.stroke();
+    
 
     const text = document.createElement('h3');
     text.classList.add('connection-text');
     text.innerText = "Current Status: ";
     switch (state) {
         case 1:
+            ctx.fillStyle = "#40FF00";
+            ctx.fill();
             text.innerText += 'Unlocked';
             break;
         case 2: 
+            ctx.fillStyle = "#FF0000";
             text.innerText = 'Locked';
             break;
         default:
+            ctx.fillStyle = "#D9D9D9";
+            ctx.fill();
             text.innerText = 'Disconnected';
             break;
     }
+    connectionDiv.appendChild(circle);
     connectionDiv.appendChild(text);
     header.appendChild(connectionDiv);
     
@@ -88,17 +112,19 @@ function clear(parent) {
 })();
 
 (function bluetoothButton(){
+    clear(footer);
     const bluetooth_div = document.createElement('div');
+    bluetooth_div.classList.add('bluetooth-div');
     const bluetooth_btn = document.createElement('button');
     bluetooth_btn.classList.add('bluetooth-button');
 
     const bluetooth_icon = document.createElement('img');
     bluetooth_icon.classList.add('bluetooth-icon');
-    bluetooth_icon.src = "./assets/bluetooth.png"
+    bluetooth_icon.src = "./assets/bluetooth.png";
 
     const bluetooth_text = document.createElement('h3');
     bluetooth_text.classList.add('bluetooth-text');
-    bluetooth_text.innerText = "Bluetooth";
+    bluetooth_text.innerText = "Link my Box";
 
     bluetooth_btn.appendChild(bluetooth_icon);
     bluetooth_btn.appendChild(bluetooth_text);
@@ -110,9 +136,18 @@ function clear(parent) {
 })();
 
 
+
+
+
+
 //
 //  CANVAS SECTION
 //
+
+
+
+
+
 
 
 //
