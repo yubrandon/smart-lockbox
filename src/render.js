@@ -149,9 +149,18 @@ header.appendChild(text);*/
 //
 //  CANVAS SECTION
 //
+(function modalSetup(){
+    const dialog = document.querySelector('.modal');
+    const modal = document.querySelector('.modal-container');
+    //prevents dialog from closing when clicking inside form
+    modal.addEventListener('click', (event)=>event.stopPropagation());
+    //Closes dialog if screen is clicked
+    dialog.addEventListener('click',()=> dialog.close());
+})();
+
 function login() {
     clearModal();
-    const dialog = document.querySelector('.modal');
+
     const field = document.querySelector('.modal-field');
 
     //create title for modal
@@ -166,23 +175,23 @@ function login() {
     //create field for api token input
     const key_div = document.createElement('div');
     key_div.classList.add('form');
-    const key = document.createElement('input');
-    key.type = "text";
-    key.id = "key";
-    key.name = "key"; 
-    key.placeholder = "Access Token";
-    key_div.appendChild(key);
+    const key_form = document.createElement('input');
+    key_form.type = "text";
+    key_form.id = "key";
+    key_form.name = "key"; 
+    key_form.placeholder = "Access Token";
+    key_div.appendChild(key_form);
     field.appendChild(key_div);
 
     //create field for url input
     const url_div = document.createElement('div');
     url_div.classList.add('form');
-    const url = document.createElement('input');
-    url.type = "text";
-    url.id = "url";
-    url.name = "url";
-    url.placeholder = "URL";
-    url_div.appendChild(url);
+    const url_form = document.createElement('input');
+    url_form.type = "text";
+    url_form.id = "url";
+    url_form.name = "url";
+    url_form.placeholder = "URL";
+    url_div.appendChild(url_form);
     field.appendChild(url_div);
 
     //create button for form submission
@@ -194,15 +203,42 @@ function login() {
     submit_btn.name = "submit";
     submit_btn.classList.add('submit-btn');
     submit_btn.innerText = "Submit";
-    submit_div.appendChild(submit_btn)
-    
-    submit_btn.addEventListener('click', () => {
+    submit_div.appendChild(submit_btn);
+
+    const form = document.querySelector('#modal-form');
+    //upon submission of form, perform following logic
+    form.addEventListener('submit', (event) => {
+        event.preventDefault(); //enable to stop refresh
+        //get values from input fields
+        const key = document.querySelector('#key').value;
+        let url = document.querySelector('#url').value;
+        //if url doesn't have scheme (only ip) add it in manually
+        if(url[0] != 'h') url = 'http://' + url;
+        //console.log(`${url}/api/v1/courses`);
+        //API call to get courses for current user
+        fetch(`${url}/api/v1/courses`, {
+            method: "GET",
+            headers: {
+                "Authorization" : `Bearer ${key}`,
+            }
+        })
+        //data returned in json file
+        .then(response => response.json())
+        //.then(data => console.log(data))  //validation
+        .catch(error => console.log("Error: ", error));
+
+        //clears fields
+        form.reset();
+        
+        //close modal
+        const dialog = document.querySelector('.modal');
         dialog.close();
+
+        //PASS INFORMATION TO ANOTHER FUNCTION TO OPEN NEXT SCREEN
+
     })
-    
+
     field.appendChild(submit_div);
-
-
 }
 //TODO: COMPLETE API CALL USING ACCESS KEY & URL INPUT
 //CREATE SECOND SCREEN THAT SHOWS ASSIGNMENTS FOR CLASSES AND SELECT DESIRED ASSIGNMENT
@@ -241,12 +277,12 @@ function login() {
 //  HELPER FUNCTIONS
 //
 
-//Clears content of a container
+//Clears content of a container - pass in object
 function clear(parent) {
-    if(content.hasChildNodes()) {
-        const del = document.querySelectorAll(parent > 'div');
+    if(parent.hasChildNodes()) {
+        const del = document.querySelectorAll(`.${parent.classList[0]} > div`);
         for(let i=0; i<del.length; i++) {
-            content.removeChild(del[i]);
+            parent.removeChild(del[i]);
         }
     }
 }
