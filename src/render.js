@@ -8,7 +8,7 @@ text.innerText = "Hello World!";
 header.appendChild(text);*/
 
 //function importing not working, use following searches to get to sections:
-// UI SECTION, MENU SECTION, CANVAS SECTION, BLUETOOTH SECTION
+// UI SECTION, MENU SECTION, CANVAS SECTION, BLUETOOTH SECTION, BOX SECTION
 //window.electron.loginMenu();
 
 
@@ -21,22 +21,11 @@ header.appendChild(text);*/
 
 
 
-//Clears content of a container - pass in header/content/footer
-function clear(parent) {
-    if(content.hasChildNodes()) {
-        const del = document.querySelectorAll(parent > 'div');
-        for(let i=0; i<del.length; i++) {
-            content.removeChild(del[i]);
-        }
-    }
-}
-
 //
 //  UI SECTION | MENU SECTION
 //
 
-//Used to update the status indicator for the box at the top
-//Call in Bluetooth connection procedure
+//Used to update the status indicator in the header
 //Arguments: 0 for disconnected, 1 for unlocked, 2 for locked
 (function connectionIndicator(state) {
     clear(header);
@@ -93,6 +82,8 @@ function clear(parent) {
 //Displays the main login menu to connect to Canvas or set task
 (function loginMenu() {
     clear(content);
+    const dialog = document.querySelector('.modal');
+
     //create div
     const canvas = document.createElement('div');
     canvas.classList.add('canvas-login');
@@ -112,8 +103,11 @@ function clear(parent) {
     canvas_btn.appendChild(canvas_icon);
     canvas_btn.appendChild(canvas_text);
 
-    //ADD EVENT LISTENER FOR LOGIN HERE
-    //call another function to get login and api key
+    //call login when canvas button is clicked
+    canvas_btn.addEventListener('click', ()=> {
+        login();
+        dialog.showModal();
+    });
 
     //append button to div
     canvas.appendChild(canvas_btn);
@@ -155,9 +149,64 @@ function clear(parent) {
 //
 //  CANVAS SECTION
 //
+function login() {
+    clearModal();
+    const dialog = document.querySelector('.modal');
+    const field = document.querySelector('.modal-field');
+
+    //create title for modal
+    const modal_header = document.querySelector('.modal-header');
+    const title_div = document.createElement('div');
+    const title = document.createElement('h4');
+    title.innerText = "Enter Details Below";
+    title.classList.add('modal-title');
+    title_div.appendChild(title);
+    modal_header.appendChild(title_div);
+    
+    //create field for api token input
+    const key_div = document.createElement('div');
+    key_div.classList.add('form');
+    const key = document.createElement('input');
+    key.type = "text";
+    key.id = "key";
+    key.name = "key"; 
+    key.placeholder = "Access Token";
+    key_div.appendChild(key);
+    field.appendChild(key_div);
+
+    //create field for url input
+    const url_div = document.createElement('div');
+    url_div.classList.add('form');
+    const url = document.createElement('input');
+    url.type = "text";
+    url.id = "url";
+    url.name = "url";
+    url.placeholder = "URL";
+    url_div.appendChild(url);
+    field.appendChild(url_div);
+
+    //create button for form submission
+    const submit_div = document.createElement('div');
+    submit_div.classList.add('submit-div')
+
+    const submit_btn = document.createElement('button');
+    submit_btn.id = "submit";
+    submit_btn.name = "submit";
+    submit_btn.classList.add('submit-btn');
+    submit_btn.innerText = "Submit";
+    submit_div.appendChild(submit_btn)
+    
+    submit_btn.addEventListener('click', () => {
+        dialog.close();
+    })
+    
+    field.appendChild(submit_div);
 
 
-
+}
+//TODO: COMPLETE API CALL USING ACCESS KEY & URL INPUT
+//CREATE SECOND SCREEN THAT SHOWS ASSIGNMENTS FOR CLASSES AND SELECT DESIRED ASSIGNMENT
+//CONFIRMATION POP UP FOR ASSIGNMENT
 
 
 
@@ -165,3 +214,45 @@ function clear(parent) {
 //
 //  BLUETOOTH SECTION
 //
+//TO DO: BLUETOOTH CONNECTION PROCESS
+//CHECK CURRENTLY CONNECTED DEVICES OR SEARCH FOR BLUETOOTH DEVICES
+//LET USER SELECT DEVICE
+//ESTABLISH CONNECTION
+
+
+
+
+//
+//  BOX SECTION
+//
+
+//*ASSUMES BLUETOOTH CONNECTION WITH BOX ESTABLISHED*
+//CODE TO CONTROL BOX LOCK/COMMUNICATION
+
+
+
+
+
+
+
+
+
+//
+//  HELPER FUNCTIONS
+//
+
+//Clears content of a container
+function clear(parent) {
+    if(content.hasChildNodes()) {
+        const del = document.querySelectorAll(parent > 'div');
+        for(let i=0; i<del.length; i++) {
+            content.removeChild(del[i]);
+        }
+    }
+}
+
+//Clears modal contents
+function clearModal(){ 
+    clear(document.querySelector('.modal-header'));
+    clear(document.querySelector('.modal-field'));
+}
