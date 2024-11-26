@@ -7,7 +7,8 @@ const footer = document.querySelector('.footer');
 text.innerText = "Hello World!";
 header.appendChild(text);*/
 
-//function importing not working, use following searches to get to sections:
+//function importing not working, will have to write all code in this file unless solution is found
+//use following searches to get to sections:
 // UI SECTION, MENU SECTION, CANVAS SECTION, BLUETOOTH SECTION, BOX SECTION
 //window.electron.loginMenu();
 
@@ -207,26 +208,21 @@ function login() {
 
     const form = document.querySelector('#modal-form');
     //upon submission of form, perform following logic
-    form.addEventListener('submit', (event) => {
-        event.preventDefault(); //enable to stop refresh
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault(); //enable to stop refresh for testing
         //get values from input fields
         const key = document.querySelector('#key').value;
         let url = document.querySelector('#url').value;
         //if url doesn't have scheme (only ip) add it in manually
         if(url[0] != 'h') url = 'http://' + url;
         //console.log(`${url}/api/v1/courses`);
-        //API call to get courses for current user
-        fetch(`${url}/api/v1/courses`, {
-            method: "GET",
-            headers: {
-                "Authorization" : `Bearer ${key}`,
-            }
-        })
-        //data returned in json file
-        .then(response => response.json())
-        //.then(data => console.log(data))  //validation
-        .catch(error => console.log("Error: ", error));
-
+        
+        //pass inputs to function, returns json
+        const courseData = await getCourses(key,url);
+        console.log(courseData);
+        
+        //consider getting user data as well
+        
         //clears fields
         form.reset();
         
@@ -240,7 +236,30 @@ function login() {
 
     field.appendChild(submit_div);
 }
-//TODO: COMPLETE API CALL USING ACCESS KEY & URL INPUT
+async function getCourses(key, url) {
+    //API call to get courses for current user
+    try {
+        const response = await fetch(`${url}/api/v1/courses`, {
+            method: "GET",
+            headers: {
+                "Authorization" : `Bearer ${key}`,
+            }
+        })
+        //data returned in json file
+        //.then(response => response.json())
+        //.then(data => console.log(data))  //validation
+        //.catch(error => console.log("Error: ", error));
+        if(!response.ok) {
+            throw new Error(`HTTP Error. Status: ${response.status}`);
+        }
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error("Error fetching data: ", error);
+        throw error;
+    }
+}
+//TODO: 
 //CREATE SECOND SCREEN THAT SHOWS ASSIGNMENTS FOR CLASSES AND SELECT DESIRED ASSIGNMENT
 //CONFIRMATION POP UP FOR ASSIGNMENT
 
