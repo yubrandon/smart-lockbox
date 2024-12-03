@@ -215,6 +215,7 @@ function login() {
         let url = document.querySelector('#url').value;
         //if url doesn't have scheme (only ip) add it in manually
         if(url[0] != 'h') url = 'http://' + url;
+        if(url[url.length-1] == '/') url = url.slice(0,url.length-1);
         //console.log(`${url}/api/v1/courses`);
         
         //pass inputs to function, returns json
@@ -230,7 +231,8 @@ function login() {
         const dialog = document.querySelector('.modal');
         dialog.close();
 
-        //PASS INFORMATION TO ANOTHER FUNCTION TO OPEN NEXT SCREEN
+        //pass information to assignnments screen
+        assignmentView(key, url, courseData);
 
     })
 
@@ -249,6 +251,33 @@ async function getCourses(key, url) {
         //.then(response => response.json())
         //.then(data => console.log(data))  //validation
         //.catch(error => console.log("Error: ", error));
+        if(!response.ok) {
+            throw new Error(`HTTP Error. Status: ${response.status}`);
+        }
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error("Error fetching data: ", error);
+        throw error;
+    }
+}
+
+async function assignmentView(key, url, courses){
+    for(let i=0; i<courses.length; i++) {
+        let code = courses[i].id;
+        let assignments = await getAssignments(key, url, code);
+        console.log(assignments);
+    }
+}
+async function getAssignments(key, url, code) {
+    //API call to get assignments for a course code
+    try {
+        const response = await fetch(`${url}/api/v1/courses/${code}/assignments`, {
+            method: "GET",
+            headers: {
+                "Authorization" : `Bearer ${key}`,
+            }
+        })
         if(!response.ok) {
             throw new Error(`HTTP Error. Status: ${response.status}`);
         }
