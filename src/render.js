@@ -222,8 +222,11 @@ function login() {
         const courseData = await getCourses(key,url);
         console.log(courseData);
         
-        //consider getting user data as well
-        
+        //get user data
+        const user = await getUser(key, url);
+        //console.log(user);
+        addUser(user);
+
         //clears fields
         form.reset();
         
@@ -261,13 +264,64 @@ async function getCourses(key, url) {
         throw error;
     }
 }
-
-async function assignmentView(key, url, courses){
-    for(let i=0; i<courses.length; i++) {
-        let code = courses[i].id;
-        let assignments = await getAssignments(key, url, code);
-        console.log(assignments);
+function addUser(user) {
+    //display name of logged in user at top
+    const nameDiv = document.createElement('div');
+    const name = document.createElement('h3');
+    name.classList.add('header-name');
+    name.innerText = user.sortable_name;
+    nameDiv.appendChild(name);
+    header.appendChild(nameDiv);
+}
+async function getUser(key, url) {
+    //API call to get user info to add to header
+    try {
+        const response = await fetch(`${url}/api/v1/users/self/profile`, {
+            method: "GET",
+            headers: {
+                "Authorization" : `Bearer ${key}`,
+            }
+        })
+        if(!response.ok) {
+            throw new Error(`HTTP Error. Status: ${response.status}`);
+        }
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error("Error fetching data: ", error);
+        throw error;
     }
+}
+function assignmentView(key, url, courseData) {
+    clear(content);
+    const courseWork = getCoursework(key, url, courseData);
+    for(let i = 0; i<courseWork.length; i++) {
+        
+    }
+
+}
+
+//return a nested array of each course and its assignments for the user
+async function getCoursework(key, url, courses) {
+    //declare array
+    let courseArray = new Array();
+    //iterate through courses
+    for(let i=0; i<courses.length; i++) {
+        const code = courses[i].id;
+        //array for assignments
+        let assignmentArray = new Array();
+        //get all assignments for each course
+        let assignments = await getAssignments(key, url, code);
+        //push all assignment objects into array
+        for(let j=0; j<assignments.length; j++) {
+            assignmentArray.push(assignments[j]);
+        }
+        //push assignment array into course array
+        courseArray.push(assignmentArray);
+        //console.log(assignments);
+    }
+    //console.log(courseArray);
+    return courseArray;
 }
 async function getAssignments(key, url, code) {
     //API call to get assignments for a course code

@@ -6,16 +6,21 @@ body {
 .container {
   display:flex;
   flex-direction:column;
+  height:95vh;
+  width:95vw;
+  justify-content:space-between;
   padding:1rem 2rem;
+}
+
+.header {
+  display:flex;
+  justify-content: space-between;
 }
 
 .footer {
   display:flex;
   justify-content: flex-end;
   align-items:center;
-  position:fixed;
-  bottom:0;
-  right:0;
   margin:10px;
 }
 
