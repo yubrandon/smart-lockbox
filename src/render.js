@@ -215,14 +215,18 @@ function login() {
         let url = document.querySelector('#url').value;
         //if url doesn't have scheme (only ip) add it in manually
         if(url[0] != 'h') url = 'http://' + url;
+        if(url[url.length-1] == '/') url = url.slice(0,url.length-1);
         //console.log(`${url}/api/v1/courses`);
         
         //pass inputs to function, returns json
         const courseData = await getCourses(key,url);
         console.log(courseData);
         
-        //consider getting user data as well
-        
+        //get user data
+        const user = await getUser(key, url);
+        //console.log(user);
+        addUser(user);
+
         //clears fields
         form.reset();
         
@@ -230,7 +234,8 @@ function login() {
         const dialog = document.querySelector('.modal');
         dialog.close();
 
-        //PASS INFORMATION TO ANOTHER FUNCTION TO OPEN NEXT SCREEN
+        //pass information to assignnments screen
+        assignmentView(key, url, courseData);
 
     })
 
@@ -259,9 +264,121 @@ async function getCourses(key, url) {
         throw error;
     }
 }
+function addUser(user) {
+    //display name of logged in user at top
+    const nameDiv = document.createElement('div');
+    const name = document.createElement('h3');
+    name.classList.add('header-name');
+    name.innerText = "Student: " + user.sortable_name;
+    nameDiv.appendChild(name);
+    header.appendChild(nameDiv);
+}
+async function getUser(key, url) {
+    //API call to get user info to add to header
+    try {
+        const response = await fetch(`${url}/api/v1/users/self/profile`, {
+            method: "GET",
+            headers: {
+                "Authorization" : `Bearer ${key}`,
+            }
+        })
+        if(!response.ok) {
+            throw new Error(`HTTP Error. Status: ${response.status}`);
+        }
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error("Error fetching data: ", error);
+        throw error;
+    }
+}
+//new screen to show assignments to select
+async function assignmentView(key, url, courseData) {   //TODO: ADD STYLING AND BUTTON TO GO TO NEXT SCREEN
+    clear(content);
+    //fetch 2d array of courses and assignments
+    const courseWork = await getCoursework(key, url, courseData);
+    console.log(courseWork);
+    //iterate through array and create div for each course
+    for(let i = 0; i<courseWork.length; i++) {
+        const courseDiv = document.createElement('div');
+        courseDiv.classList.add('course-div');
+
+        const courseHeader = document.createElement('div');
+        courseHeader.classList.add('course-header');
+        const courseText = document.createElement('h2');
+        courseText.innerText = "Course:" + courseWork[i][0];
+        //add interactable arrow next to course name
+
+        courseHeader.appendChild(courseText);
+        courseDiv.appendChild(courseHeader);
+
+        const assignmentContainer = document.createElement('div');
+        assignmentContainer.classList.add('course-assignments');
+
+        //iterate through nested array to get assignments for course
+        for(let j=1; j<courseWork[i].length; j++) {
+            const assignmentDiv = document.createElement('div');
+            assignmentDiv.classList.add('assignment-div');
+            const assignmentName = document.createElement('h3');
+            assignmentName.classList.add('assignment-name');
+            assignmentName.innerText = courseWork[i][j].name;
+            assignmentDiv.appendChild(assignmentName);
+
+            //add button that appears when div is active to choose a specific assignment
+            
+            assignmentContainer.appendChild(assignmentDiv);
+        }
+        //add to body
+        courseDiv.appendChild(assignmentContainer);
+        content.appendChild(courseDiv);
+    }
+
+}
+
+//return a 2d array of each course and its assignments for the user
+async function getCoursework(key, url, courses) {
+    //declare array
+    let courseArray = new Array();
+    //iterate through courses
+    for(let i=0; i<courses.length; i++) {
+        const code = courses[i].id;
+        //array for assignments
+        //first index in array will have course name
+        let assignmentArray = new Array(courses[i].name);
+        //get all assignments for each course
+        let assignments = await getAssignments(key, url, code);
+        //push all assignment objects into array
+        for(let j=0; j<assignments.length; j++) {
+            assignmentArray.push(assignments[j]);
+        }
+        //push assignment array into course array
+        courseArray.push(assignmentArray);
+        console.log(assignments);
+    }
+    //console.log(courseArray);
+    return courseArray;
+}
+async function getAssignments(key, url, code) {
+    //API call to get assignments for a course code
+    try {
+        const response = await fetch(`${url}/api/v1/courses/${code}/assignments`, {
+            method: "GET",
+            headers: {
+                "Authorization" : `Bearer ${key}`,
+            }
+        })
+        if(!response.ok) {
+            throw new Error(`HTTP Error. Status: ${response.status}`);
+        }
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error("Error fetching data: ", error);
+        throw error;
+    }
+}
 //TODO: 
-//CREATE SECOND SCREEN THAT SHOWS ASSIGNMENTS FOR CLASSES AND SELECT DESIRED ASSIGNMENT
-//CONFIRMATION POP UP FOR ASSIGNMENT
+//NEXT SCREEN AFTER SELECTING ASSIGNMENT
 
 
 
