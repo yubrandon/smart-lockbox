@@ -269,7 +269,7 @@ function addUser(user) {
     const nameDiv = document.createElement('div');
     const name = document.createElement('h3');
     name.classList.add('header-name');
-    name.innerText = user.sortable_name;
+    name.innerText = "Student: " + user.sortable_name;
     nameDiv.appendChild(name);
     header.appendChild(nameDiv);
 }
@@ -292,16 +292,50 @@ async function getUser(key, url) {
         throw error;
     }
 }
-function assignmentView(key, url, courseData) {
+//new screen to show assignments to select
+async function assignmentView(key, url, courseData) {   //TODO: ADD STYLING AND BUTTON TO GO TO NEXT SCREEN
     clear(content);
-    const courseWork = getCoursework(key, url, courseData);
+    //fetch 2d array of courses and assignments
+    const courseWork = await getCoursework(key, url, courseData);
+    console.log(courseWork);
+    //iterate through array and create div for each course
     for(let i = 0; i<courseWork.length; i++) {
-        
+        const courseDiv = document.createElement('div');
+        courseDiv.classList.add('course-div');
+
+        const courseHeader = document.createElement('div');
+        courseHeader.classList.add('course-header');
+        const courseText = document.createElement('h2');
+        courseText.innerText = "Course:" + courseWork[i][0];
+        //add interactable arrow next to course name
+
+        courseHeader.appendChild(courseText);
+        courseDiv.appendChild(courseHeader);
+
+        const assignmentContainer = document.createElement('div');
+        assignmentContainer.classList.add('course-assignments');
+
+        //iterate through nested array to get assignments for course
+        for(let j=1; j<courseWork[i].length; j++) {
+            const assignmentDiv = document.createElement('div');
+            assignmentDiv.classList.add('assignment-div');
+            const assignmentName = document.createElement('h3');
+            assignmentName.classList.add('assignment-name');
+            assignmentName.innerText = courseWork[i][j].name;
+            assignmentDiv.appendChild(assignmentName);
+
+            //add button that appears when div is active to choose a specific assignment
+            
+            assignmentContainer.appendChild(assignmentDiv);
+        }
+        //add to body
+        courseDiv.appendChild(assignmentContainer);
+        content.appendChild(courseDiv);
     }
 
 }
 
-//return a nested array of each course and its assignments for the user
+//return a 2d array of each course and its assignments for the user
 async function getCoursework(key, url, courses) {
     //declare array
     let courseArray = new Array();
@@ -309,7 +343,8 @@ async function getCoursework(key, url, courses) {
     for(let i=0; i<courses.length; i++) {
         const code = courses[i].id;
         //array for assignments
-        let assignmentArray = new Array();
+        //first index in array will have course name
+        let assignmentArray = new Array(courses[i].name);
         //get all assignments for each course
         let assignments = await getAssignments(key, url, code);
         //push all assignment objects into array
@@ -318,7 +353,7 @@ async function getCoursework(key, url, courses) {
         }
         //push assignment array into course array
         courseArray.push(assignmentArray);
-        //console.log(assignments);
+        console.log(assignments);
     }
     //console.log(courseArray);
     return courseArray;
@@ -343,8 +378,7 @@ async function getAssignments(key, url, code) {
     }
 }
 //TODO: 
-//CREATE SECOND SCREEN THAT SHOWS ASSIGNMENTS FOR CLASSES AND SELECT DESIRED ASSIGNMENT
-//CONFIRMATION POP UP FOR ASSIGNMENT
+//NEXT SCREEN AFTER SELECTING ASSIGNMENT
 
 
 
