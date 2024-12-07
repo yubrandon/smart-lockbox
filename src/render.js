@@ -317,6 +317,7 @@ async function assignmentView(key, url, courseData) {   //TODO: ADD STYLING AND 
 
         //iterate through nested array to get assignments for course
         for(let j=1; j<courseWork[i].length; j++) {
+            console.log();
             const assignmentDiv = document.createElement('div');
             assignmentDiv.classList.add('assignment-div');
             const assignmentName = document.createElement('h3');
@@ -358,10 +359,29 @@ async function getCoursework(key, url, courses) {
     //console.log(courseArray);
     return courseArray;
 }
-async function getAssignments(key, url, code) {
+async function getAssignments(key, url, courseID) {
     //API call to get assignments for a course code
     try {
-        const response = await fetch(`${url}/api/v1/courses/${code}/assignments`, {
+        const response = await fetch(`${url}/api/v1/courses/${courseID}/assignments`, {
+            method: "GET",
+            headers: {
+                "Authorization" : `Bearer ${key}`,
+            }
+        })
+        if(!response.ok) {
+            throw new Error(`HTTP Error. Status: ${response.status}`);
+        }
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error("Error fetching data: ", error);
+        throw error;
+    }
+}
+async function getSubmissions(key, url,courseID, assignmentID) {
+    //get list of submissions for an assignment
+    try {
+        const response = await fetch(`${url}/api/v1/${courseID}/assignments/${assignmentID}/submissions`, {
             method: "GET",
             headers: {
                 "Authorization" : `Bearer ${key}`,
