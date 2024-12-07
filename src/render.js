@@ -220,7 +220,7 @@ function login() {
         
         //pass inputs to function, returns json
         const courseData = await getCourses(key,url);
-        console.log(courseData);
+        //console.log(courseData);
         
         //get user data
         const user = await getUser(key, url);
@@ -306,7 +306,7 @@ async function assignmentView(key, url, courseData) {   //TODO: ADD STYLING AND 
         const courseHeader = document.createElement('div');
         courseHeader.classList.add('course-header');
         const courseText = document.createElement('h2');
-        courseText.innerText = "Course:" + courseWork[i][0];
+        courseText.innerText = "Course:" + courseWork[i][0].name;
         //add interactable arrow next to course name
 
         courseHeader.appendChild(courseText);
@@ -317,17 +317,20 @@ async function assignmentView(key, url, courseData) {   //TODO: ADD STYLING AND 
 
         //iterate through nested array to get assignments for course
         for(let j=1; j<courseWork[i].length; j++) {
-            console.log();
-            const assignmentDiv = document.createElement('div');
-            assignmentDiv.classList.add('assignment-div');
-            const assignmentName = document.createElement('h3');
-            assignmentName.classList.add('assignment-name');
-            assignmentName.innerText = courseWork[i][j].name;
-            assignmentDiv.appendChild(assignmentName);
-
-            //add button that appears when div is active to choose a specific assignment
-            
-            assignmentContainer.appendChild(assignmentDiv);
+            let sub = await getSubmissions(key, url,courseWork[i][0].id, courseWork[i][j].id);
+            console.log(sub);
+            if(sub.attempt != courseWork[i][j].allowed_attempts || courseWork[i][j].allowed_attempts == -1) {
+                const assignmentDiv = document.createElement('div');
+                assignmentDiv.classList.add('assignment-div');
+                const assignmentName = document.createElement('h3');
+                assignmentName.classList.add('assignment-name');
+                assignmentName.innerText = courseWork[i][j].name;
+                assignmentDiv.appendChild(assignmentName);
+    
+                //add button that appears when div is active to choose a specific assignment
+                
+                assignmentContainer.appendChild(assignmentDiv);
+            }
         }
         //add to body
         courseDiv.appendChild(assignmentContainer);
@@ -344,8 +347,8 @@ async function getCoursework(key, url, courses) {
     for(let i=0; i<courses.length; i++) {
         const code = courses[i].id;
         //array for assignments
-        //first index in array will have course name
-        let assignmentArray = new Array(courses[i].name);
+        //first index in array will have course information
+        let assignmentArray = new Array(courses[i]);
         //get all assignments for each course
         let assignments = await getAssignments(key, url, code);
         //push all assignment objects into array
@@ -378,10 +381,11 @@ async function getAssignments(key, url, courseID) {
         throw error;
     }
 }
-async function getSubmissions(key, url,courseID, assignmentID) {
+async function getSubmissions(key, url,course_id, assignment_id) {
     //get list of submissions for an assignment
+    let user = await getUser(key,url);
     try {
-        const response = await fetch(`${url}/api/v1/${courseID}/assignments/${assignmentID}/submissions`, {
+        const response = await fetch(`${url}/api/v1/courses/${course_id}/assignments/${assignment_id}/submissions/${user.id}`, {
             method: "GET",
             headers: {
                 "Authorization" : `Bearer ${key}`,
