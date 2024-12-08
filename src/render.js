@@ -75,7 +75,6 @@ header.appendChild(text);*/
     //append elements to div
     connectionDiv.appendChild(circle);
     connectionDiv.appendChild(text);
-    //append div to header
     header.appendChild(connectionDiv);
     
 })(0);
@@ -218,25 +217,32 @@ function login() {
         if(url[url.length-1] == '/') url = url.slice(0,url.length-1);
         //console.log(`${url}/api/v1/courses`);
         
+        const dialog = document.querySelector('.modal');
         //pass inputs to function, returns json
         const courseData = await getCourses(key,url);
         //console.log(courseData);
-        
-        //get user data
-        const user = await getUser(key, url);
-        //console.log(user);
-        addUser(user);
 
-        //clears fields
-        form.reset();
-        
-        //close modal
-        const dialog = document.querySelector('.modal');
-        dialog.close();
+        //check for error
+        if(courseData instanceof Error) {
+            //clears fields
+            form.reset();
+            
+            //close modal
+            dialog.close();
+            alert('Login Error! Check your access code or URL.');
+        }
+        else {
+            //get user data
+            const user = await getUser(key, url);
+            //console.log(user);
+            addUser(user);
 
-        //pass information to assignnments screen
-        assignmentView(key, url, courseData);
+            form.reset();
+            dialog.close();
 
+            //pass information to assignnments screen
+            assignmentView(key, url, courseData);
+        }
     })
 
     field.appendChild(submit_div);
@@ -261,16 +267,25 @@ async function getCourses(key, url) {
         return data;
     } catch (error) {
         console.error("Error fetching data: ", error);
-        throw error;
+        return error;
     }
 }
 function addUser(user) {
     //display name of logged in user at top
+
+    //TODO: create function to get current box status OR check box status after connecton with box is set up
+    //          - clear header and readd status indicator
+    //          - current bug where dupe names can appear
+
+    //create object
     const nameDiv = document.createElement('div');
     const name = document.createElement('h3');
     name.classList.add('header-name');
     name.innerText = "Student: " + user.sortable_name;
     nameDiv.appendChild(name);
+
+    //TODO: add logout button
+
     header.appendChild(nameDiv);
 }
 async function getUser(key, url) {
@@ -289,7 +304,7 @@ async function getUser(key, url) {
         return data;
     } catch (error) {
         console.error("Error fetching data: ", error);
-        throw error;
+        return error;
     }
 }
 //new screen to show assignments to select
@@ -378,7 +393,7 @@ async function getAssignments(key, url, courseID) {
         return data;
     } catch (error) {
         console.error("Error fetching data: ", error);
-        throw error;
+        return error;
     }
 }
 async function getSubmissions(key, url,course_id, assignment_id) {
@@ -398,7 +413,7 @@ async function getSubmissions(key, url,course_id, assignment_id) {
         return data;
     } catch (error) {
         console.error("Error fetching data: ", error);
-        throw error;
+        return error;
     }
 }
 //TODO: 
