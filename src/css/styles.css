@@ -62,13 +62,12 @@ body {
   padding: 10px 25px;
 }
 
-.canvas-login-button:hover, .bluetooth-button:hover, .submit-btn:hover  {
+button:hover  {
   filter: brightness(90%);
   cursor:grab;
 }
 
 .canvas-login-button:active, .bluetooth-button:active, .submit-btn:active {
-  box-shadow: 0 0 0 white;
   margin-top: 1px;
   margin-bottom:-1px;
 }
