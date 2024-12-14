@@ -7,7 +7,7 @@ const footer = document.querySelector('.footer');
 text.innerText = "Hello World!";
 header.appendChild(text);*/
 
-//function importing not working, will have to write all code in this file unless solution is found
+//Function importing not working, will have to write all code in this file unless solution is found
 //use following searches to get to sections:
 // UI SECTION, MENU SECTION, CANVAS SECTION, BLUETOOTH SECTION, BOX SECTION
 //window.electron.loginMenu();
@@ -30,19 +30,19 @@ header.appendChild(text);*/
 //Arguments: 0 for disconnected, 1 for unlocked, 2 for locked
 (function connectionIndicator(state) {
     clear(header);
-    //create div
+    //Create div
     const connectionDiv = document.createElement('div');
     connectionDiv.classList.add('indicator-div');
-    //create canvas for shape
+    //Create canvas for shape
     const circle = document.createElement('canvas');
     circle.classList.add('indicator-circle');
-    //dimensions
+    //Dimensions
     const X = 60;
     const Y = 40;
     circle.width = X;
     circle.height = Y;
 
-    //create circle
+    //Create circle
     const ctx = circle.getContext("2d");
     ctx.scale(X / Y, 1);
     ctx.beginPath();
@@ -51,11 +51,11 @@ header.appendChild(text);*/
     ctx.strokeStyle = "black";
     ctx.stroke();
     
-    //create text
+    //Create text
     const text = document.createElement('h3');
     text.classList.add('connection-text');
     text.innerText = "Current Status: ";
-    //change indicator based on state
+    //Change indicator based on state
     switch (state) {
         case 1:
             ctx.fillStyle = "#40FF00";
@@ -72,7 +72,7 @@ header.appendChild(text);*/
             text.innerText = 'Disconnected';
             break;
     }
-    //append elements to div
+    //Append elements to div
     connectionDiv.appendChild(circle);
     connectionDiv.appendChild(text);
     header.appendChild(connectionDiv);
@@ -84,59 +84,59 @@ header.appendChild(text);*/
     clear(content);
     const dialog = document.querySelector('.modal');
 
-    //create div
+    //Create div
     const canvas = document.createElement('div');
     canvas.classList.add('canvas-login');
-    //create button
+    //Create button
     const canvas_btn = document.createElement('button');
     canvas_btn.classList.add('canvas-login-button')
 
-    //create image
+    //Create image
     const canvas_icon = document.createElement('img');
     canvas_icon.classList.add('canvas-login-icon');
     canvas_icon.src = "./assets/canvas.png";
-    //create text
+    //Create text
     const canvas_text = document.createElement('h2');
     canvas_text.innerText = 'Login with Canvas'
     canvas_text.classList.add('canvas-login-text');
-    //append elements to button
+    //Append elements to button
     canvas_btn.appendChild(canvas_icon);
     canvas_btn.appendChild(canvas_text);
 
-    //call login when canvas button is clicked
+    //Call login when canvas button is clicked
     canvas_btn.addEventListener('click', ()=> {
         login();
         dialog.showModal();
     });
 
-    //append button to div
+    //Append button to div
     canvas.appendChild(canvas_btn);
-    //append div to body
+    //Append div to body
     content.appendChild(canvas);
 })();
 
 (function bluetoothButton(){
     clear(footer);
-    //create div
+    //Create div
     const bluetooth_div = document.createElement('div');
     bluetooth_div.classList.add('bluetooth-div');
-    //create button
+    //Create button
     const bluetooth_btn = document.createElement('button');
     bluetooth_btn.classList.add('bluetooth-button');
-    //create image
+    //Create image
     const bluetooth_icon = document.createElement('img');
     bluetooth_icon.classList.add('bluetooth-icon');
     bluetooth_icon.src = "./assets/bluetooth.png";
-    //create text
+    //Create text
     const bluetooth_text = document.createElement('h3');
     bluetooth_text.classList.add('bluetooth-text');
     bluetooth_text.innerText = "Link my Box";
-    //append elements to button
+    //Append elements to button
     bluetooth_btn.appendChild(bluetooth_icon);
     bluetooth_btn.appendChild(bluetooth_text);
-    //append button to div
+    //Append button to div
     bluetooth_div.appendChild(bluetooth_btn);
-    //append div to footer
+    //Append div to footer
     footer.appendChild(bluetooth_div);
 
 })();
@@ -152,7 +152,7 @@ header.appendChild(text);*/
 (function modalSetup(){
     const dialog = document.querySelector('.modal');
     const modal = document.querySelector('.modal-container');
-    //prevents dialog from closing when clicking inside form
+    //Prevents dialog from closing when clicking inside form
     modal.addEventListener('click', (event)=>event.stopPropagation());
     //Closes dialog if screen is clicked
     dialog.addEventListener('click',()=> dialog.close());
@@ -163,7 +163,7 @@ function login() {
 
     const field = document.querySelector('.modal-field');
 
-    //create title for modal
+    //Create title for modal
     const modal_header = document.querySelector('.modal-header');
     const title_div = document.createElement('div');
     const title = document.createElement('h4');
@@ -172,7 +172,7 @@ function login() {
     title_div.appendChild(title);
     modal_header.appendChild(title_div);
     
-    //create field for api token input
+    //Create field for api token input
     const key_div = document.createElement('div');
     key_div.classList.add('form');
     const key_form = document.createElement('input');
@@ -183,7 +183,7 @@ function login() {
     key_div.appendChild(key_form);
     field.appendChild(key_div);
 
-    //create field for url input
+    //Create field for url input
     const url_div = document.createElement('div');
     url_div.classList.add('form');
     const url_form = document.createElement('input');
@@ -194,7 +194,7 @@ function login() {
     url_div.appendChild(url_form);
     field.appendChild(url_div);
 
-    //create button for form submission
+    //Create button for form submission
     const submit_div = document.createElement('div');
     submit_div.classList.add('submit-div')
 
@@ -206,41 +206,39 @@ function login() {
     submit_div.appendChild(submit_btn);
 
     const form = document.querySelector('#modal-form');
-    //upon submission of form, perform following logic
+    //Upon submission of form, perform following logic
     form.addEventListener('submit', async (event) => {
         event.preventDefault(); //enable to stop refresh for testing
-        //get values from input fields
+        //Get values from input fields
         const key = document.querySelector('#key').value;
         let url = document.querySelector('#url').value;
-        //if url doesn't have scheme (only ip) add it in manually
+        //If url doesn't have scheme (only ip) add it in manually
         if(url[0] != 'h') url = 'http://' + url;
         if(url[url.length-1] == '/') url = url.slice(0,url.length-1);
-        //console.log(`${url}/api/v1/courses`);
+        //Console.log(`${url}/api/v1/courses`);
         
         const dialog = document.querySelector('.modal');
-        //pass inputs to function, returns json
+        //Pass inputs to function, returns json
         const courseData = await getCourses(key,url);
-        //console.log(courseData);
+        //Console.log(courseData);
 
-        //check for error
+        //Check for error
         if(courseData instanceof Error) {
-            //clears fields
+            //Clears fields
             form.reset();
             
-            //close modal
-            dialog.close();
             alert('Login Error! Check your access code or URL.');
         }
         else {
-            //get user data
+            //Get user data
             const user = await getUser(key, url);
-            //console.log(user);
+            //Console.log(user);
             addUser(user);
 
             form.reset();
             dialog.close();
 
-            //pass information to assignnments screen
+            //Pass information to assignnments screen
             assignmentView(key, url, courseData);
         }
     })
@@ -256,7 +254,7 @@ async function getCourses(key, url) {
                 "Authorization" : `Bearer ${key}`,
             }
         })
-        //data returned in json file
+        //Data returned in json file
         //.then(response => response.json())
         //.then(data => console.log(data))  //validation
         //.catch(error => console.log("Error: ", error));
@@ -271,13 +269,13 @@ async function getCourses(key, url) {
     }
 }
 function addUser(user) {
-    //display name of logged in user at top
+    //Display name of logged in user at top
 
     //TODO: create function to get current box status OR check box status after connecton with box is set up
     //          - clear header and readd status indicator
     //          - current bug where dupe names can appear
 
-    //create object
+    //Create object
     const nameDiv = document.createElement('div');
     const name = document.createElement('h3');
     name.classList.add('header-name');
@@ -307,13 +305,13 @@ async function getUser(key, url) {
         return error;
     }
 }
-//new screen to show assignments to select
+//New screen to show assignments to select
 async function assignmentView(key, url, courseData) {   //TODO: ADD STYLING AND BUTTON TO GO TO NEXT SCREEN
     clear(content);
-    //fetch 2d array of courses and assignments
+    //Fetch 2d array of courses and assignments
     const courseWork = await getCoursework(key, url, courseData);
     console.log(courseWork);
-    //iterate through array and create div for each course
+    //Iterate through array and create div for each course
     for(let i = 0; i<courseWork.length; i++) {
         const courseDiv = document.createElement('div');
         courseDiv.classList.add('course-div');
@@ -322,7 +320,7 @@ async function assignmentView(key, url, courseData) {   //TODO: ADD STYLING AND 
         courseHeader.classList.add('course-header');
         const courseText = document.createElement('h2');
         courseText.innerText = "Course:" + courseWork[i][0].name;
-        //add interactable arrow next to course name
+        //Add interactable arrow next to course name
 
         courseHeader.appendChild(courseText);
         courseDiv.appendChild(courseHeader);
@@ -330,7 +328,7 @@ async function assignmentView(key, url, courseData) {   //TODO: ADD STYLING AND 
         const assignmentContainer = document.createElement('div');
         assignmentContainer.classList.add('course-assignments');
 
-        //iterate through nested array to get assignments for course
+        //Iterate through nested array to get assignments for course
         for(let j=1; j<courseWork[i].length; j++) {
             let sub = await getSubmissions(key, url,courseWork[i][0].id, courseWork[i][j].id);
             console.log(sub);
@@ -342,39 +340,39 @@ async function assignmentView(key, url, courseData) {   //TODO: ADD STYLING AND 
                 assignmentName.innerText = courseWork[i][j].name;
                 assignmentDiv.appendChild(assignmentName);
     
-                //add button that appears when div is active to choose a specific assignment
+                //Add button that appears when div is active to choose a specific assignment
                 
                 assignmentContainer.appendChild(assignmentDiv);
             }
         }
-        //add to body
+        //Add to body
         courseDiv.appendChild(assignmentContainer);
         content.appendChild(courseDiv);
     }
 
 }
 
-//return a 2d array of each course and its assignments for the user
+//Return a 2d array of each course and its assignments for the user
 async function getCoursework(key, url, courses) {
-    //declare array
+    //Declare array
     let courseArray = new Array();
-    //iterate through courses
+    //Iterate through courses
     for(let i=0; i<courses.length; i++) {
         const code = courses[i].id;
-        //array for assignments
-        //first index in array will have course information
+        //Array for assignments
+        //First index in array will have course information
         let assignmentArray = new Array(courses[i]);
-        //get all assignments for each course
+        //Get all assignments for each course
         let assignments = await getAssignments(key, url, code);
-        //push all assignment objects into array
+        //Push all assignment objects into array
         for(let j=0; j<assignments.length; j++) {
             assignmentArray.push(assignments[j]);
         }
-        //push assignment array into course array
+        //Push assignment array into course array
         courseArray.push(assignmentArray);
         console.log(assignments);
     }
-    //console.log(courseArray);
+    //Console.log(courseArray);
     return courseArray;
 }
 async function getAssignments(key, url, courseID) {
@@ -397,7 +395,7 @@ async function getAssignments(key, url, courseID) {
     }
 }
 async function getSubmissions(key, url,course_id, assignment_id) {
-    //get list of submissions for an assignment
+    //Get list of submissions for an assignment
     let user = await getUser(key,url);
     try {
         const response = await fetch(`${url}/api/v1/courses/${course_id}/assignments/${assignment_id}/submissions/${user.id}`, {
