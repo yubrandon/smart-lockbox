@@ -222,6 +222,7 @@ function login() {
         const courseData = await getCourses(key,url);
         //Console.log(courseData);
 
+        var pressed = false;
         //Check for error
         if(courseData instanceof Error) {
             //Clears fields
@@ -230,6 +231,7 @@ function login() {
             alert('Login Error! Check your access code or URL.');
         }
         else {
+            pressed = true;
             //Get user data
             const user = await getUser(key, url);
             //Console.log(user);
@@ -240,6 +242,7 @@ function login() {
 
             //Pass information to assignnments screen
             assignmentView(key, url, courseData);
+            pressed = false;
         }
     })
 
@@ -317,8 +320,9 @@ async function assignmentView(key, url, courseData) {   //TODO: ADD STYLING AND 
         courseDiv.classList.add('course-div');
 
         const courseHeader = document.createElement('div');
-        courseHeader.classList.add('course-header');
+        courseHeader.classList.add('course-header-div');
         const courseText = document.createElement('h2');
+        courseText.classList.add('course-header');
         courseText.innerText = "Course:" + courseWork[i][0].name;
         //Add interactable arrow next to course name
 
@@ -341,7 +345,22 @@ async function assignmentView(key, url, courseData) {   //TODO: ADD STYLING AND 
                 assignmentDiv.appendChild(assignmentName);
     
                 //Add button that appears when div is active to choose a specific assignment
-                
+                const assignmentButton = document.createElement('div');
+                assignmentButton.classList.add('assignment-button-div');
+                const selectButton = document.createElement('button');
+                selectButton.addEventListener('click', (event) => {
+                    console.log(event);
+                    //code to enter locking waiting screen
+                    //may redisplay modal to confirm assignment choice
+                })
+                selectButton.classList.add('assignment-button');
+                const selectText = document.createElement('p');
+                selectText.innerText = 'Select';
+                selectText.classList.add('assignment-button-text');
+
+                selectButton.appendChild(selectText);
+                assignmentButton.appendChild(selectButton);
+                assignmentDiv.appendChild(assignmentButton);
                 assignmentContainer.appendChild(assignmentDiv);
             }
         }
