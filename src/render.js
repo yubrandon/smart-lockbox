@@ -28,7 +28,7 @@ header.appendChild(text);*/
 
 //Used to update the status indicator in the header
 //Arguments: 0 for disconnected, 1 for unlocked, 2 for locked
-(function connectionIndicator(state) {
+function connectionIndicator(state) {
     clear(header);
     //Create div
     const connectionDiv = document.createElement('div');
@@ -54,13 +54,12 @@ header.appendChild(text);*/
     //Create text
     const text = document.createElement('h3');
     text.classList.add('connection-text');
-    text.innerText = "Current Status: ";
     //Change indicator based on state
     switch (state) {
         case 1:
             ctx.fillStyle = "#40FF00";
             ctx.fill();
-            text.innerText += 'Unlocked';
+            text.innerText += 'Connected';
             break;
         case 2: 
             ctx.fillStyle = "#FF0000";
@@ -77,10 +76,11 @@ header.appendChild(text);*/
     connectionDiv.appendChild(text);
     header.appendChild(connectionDiv);
     
-})(0);
+}
+connectionIndicator(0);
 
 //Displays the main login menu to connect to Canvas or set task
-(function loginMenu() {
+function loginMenu() {
     clear(content);
     const dialog = document.querySelector('.modal');
 
@@ -113,7 +113,8 @@ header.appendChild(text);*/
     canvas.appendChild(canvas_btn);
     //Append div to body
     content.appendChild(canvas);
-})();
+}
+loginMenu();
 
 (function bluetoothButton(){
     clear(footer);
@@ -149,14 +150,6 @@ header.appendChild(text);*/
 //
 //  CANVAS SECTION
 //
-(function modalSetup(){
-    const dialog = document.querySelector('.modal');
-    const modal = document.querySelector('.modal-container');
-    //Prevents dialog from closing when clicking inside form
-    modal.addEventListener('click', (event)=>event.stopPropagation());
-    //Closes dialog if screen is clicked
-    dialog.addEventListener('click',()=> dialog.close());
-})();
 
 function login() {
     clearModal();
@@ -206,9 +199,9 @@ function login() {
     submit_div.appendChild(submit_btn);
 
     const form = document.querySelector('#modal-form');
-    //Upon submission of form, perform following logic
+    //Upon submission of form, check form values and login if valid
     form.addEventListener('submit', async (event) => {
-        event.preventDefault(); //enable to stop refresh for testing
+        event.preventDefault(); //Enable to stop refresh
         //Get values from input fields
         const key = document.querySelector('#key').value;
         let url = document.querySelector('#url').value;
@@ -240,76 +233,55 @@ function login() {
             form.reset();
             dialog.close();
 
-            //Pass information to assignnments screen
+            //Pass information to assignments screen
             assignmentView(key, url, courseData);
             pressed = false;
         }
-    })
+        //Event listener will clean itself up upon next screen being displayed
+    }, { once: true });
 
     field.appendChild(submit_div);
 }
-async function getCourses(key, url) {
-    //API call to get courses for current user
-    try {
-        const response = await fetch(`${url}/api/v1/courses`, {
-            method: "GET",
-            headers: {
-                "Authorization" : `Bearer ${key}`,
-            }
-        })
-        //Data returned in json file
-        //.then(response => response.json())
-        //.then(data => console.log(data))  //validation
-        //.catch(error => console.log("Error: ", error));
-        if(!response.ok) {
-            throw new Error(`HTTP Error. Status: ${response.status}`);
-        }
-        const data = await response.json();
-        return data;
-    } catch (error) {
-        console.error("Error fetching data: ", error);
-        return error;
-    }
-}
-function addUser(user) {
-    //Display name of logged in user at top
 
-    //TODO: create function to get current box status OR check box status after connecton with box is set up
-    //          - clear header and readd status indicator
-    //          - current bug where dupe names can appear
+//Display name of logged in user at top
+function addUser(user) {
+    //Clear current header and re-add indicator
+    const status = isConnected();
+    clear(header);
+    connectionIndicator(status);
 
     //Create object
     const nameDiv = document.createElement('div');
+    nameDiv.classList.add('header-name');
     const name = document.createElement('h3');
     name.classList.add('header-name');
     name.innerText = "Student: " + user.sortable_name;
-    nameDiv.appendChild(name);
 
-    //TODO: add logout button
+    const logout = document.createElement('button');
+    logout.classList.add('logout-button');
+    logout.innerText = 'Log out';
+    logout.addEventListener('click', () => {
+        loginMenu();
+    })
+
+    nameDiv.appendChild(name);
+    nameDiv.appendChild(logout);
 
     header.appendChild(nameDiv);
 }
-async function getUser(key, url) {
-    //API call to get user info to add to header
-    try {
-        const response = await fetch(`${url}/api/v1/users/self/profile`, {
-            method: "GET",
-            headers: {
-                "Authorization" : `Bearer ${key}`,
-            }
-        })
-        if(!response.ok) {
-            throw new Error(`HTTP Error. Status: ${response.status}`);
-        }
-        const data = await response.json();
-        return data;
-    } catch (error) {
-        console.error("Error fetching data: ", error);
-        return error;
-    }
+
+//Return connection status of the box
+function isConnected() {
+    const indicator = document.querySelector('.connection-text');
+    //console.log(indicator);
+    if(indicator.innerText == 'Connected') return 1;
+    else if(indicator.innerText == 'Locked') return 2;
+    else return 0;
+
 }
+
 //New screen to show assignments to select
-async function assignmentView(key, url, courseData) {   //TODO: ADD STYLING AND BUTTON TO GO TO NEXT SCREEN
+async function assignmentView(key, url, courseData) {
     clear(content);
     //Fetch 2d array of courses and assignments
     const courseWork = await getCoursework(key, url, courseData);
@@ -349,7 +321,8 @@ async function assignmentView(key, url, courseData) {   //TODO: ADD STYLING AND 
                 assignmentButton.classList.add('assignment-button-div');
                 const selectButton = document.createElement('button');
                 selectButton.addEventListener('click', (event) => {
-                    console.log(event);
+                    //TODO: button asks for confirmation then goes to next screen
+                    //console.log(event);
                     //code to enter locking waiting screen
                     //may redisplay modal to confirm assignment choice
                 })
@@ -389,52 +362,15 @@ async function getCoursework(key, url, courses) {
         }
         //Push assignment array into course array
         courseArray.push(assignmentArray);
-        console.log(assignments);
+        //console.log(assignments);
     }
     //Console.log(courseArray);
     return courseArray;
 }
-async function getAssignments(key, url, courseID) {
-    //API call to get assignments for a course code
-    try {
-        const response = await fetch(`${url}/api/v1/courses/${courseID}/assignments`, {
-            method: "GET",
-            headers: {
-                "Authorization" : `Bearer ${key}`,
-            }
-        })
-        if(!response.ok) {
-            throw new Error(`HTTP Error. Status: ${response.status}`);
-        }
-        const data = await response.json();
-        return data;
-    } catch (error) {
-        console.error("Error fetching data: ", error);
-        return error;
-    }
-}
-async function getSubmissions(key, url,course_id, assignment_id) {
-    //Get list of submissions for an assignment
-    let user = await getUser(key,url);
-    try {
-        const response = await fetch(`${url}/api/v1/courses/${course_id}/assignments/${assignment_id}/submissions/${user.id}`, {
-            method: "GET",
-            headers: {
-                "Authorization" : `Bearer ${key}`,
-            }
-        })
-        if(!response.ok) {
-            throw new Error(`HTTP Error. Status: ${response.status}`);
-        }
-        const data = await response.json();
-        return data;
-    } catch (error) {
-        console.error("Error fetching data: ", error);
-        return error;
-    }
-}
+
 //TODO: 
 //NEXT SCREEN AFTER SELECTING ASSIGNMENT
+//REQUIRES ESTABLISHED CONNECTION
 
 
 
@@ -468,6 +404,15 @@ async function getSubmissions(key, url,course_id, assignment_id) {
 //
 //  HELPER FUNCTIONS
 //
+//Defines modal for pop up dialogs
+(function modalSetup(){
+    const dialog = document.querySelector('.modal');
+    const modal = document.querySelector('.modal-container');
+    //Prevents dialog from closing when clicking inside form
+    modal.addEventListener('click', (event)=>event.stopPropagation());
+    //Closes dialog if screen is clicked
+    dialog.addEventListener('click',()=> dialog.close());
+})();
 
 //Clears content of a container - pass in object
 function clear(parent) {
@@ -483,4 +428,92 @@ function clear(parent) {
 function clearModal(){ 
     clear(document.querySelector('.modal-header'));
     clear(document.querySelector('.modal-field'));
+}
+
+
+
+//
+//  API CALL FUNCTIONS
+//
+
+//Get courses for current user
+async function getCourses(key, url) {
+    try {
+        const response = await fetch(`${url}/api/v1/courses`, {
+            method: "GET",
+            headers: {
+                "Authorization" : `Bearer ${key}`,
+            }
+        })
+        //Data returned in json file
+        //.then(response => response.json())
+        //.then(data => console.log(data))  //validation
+        //.catch(error => console.log("Error: ", error));
+        if(!response.ok) {
+            throw new Error(`HTTP Error. Status: ${response.status}`);
+        }
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error("Error fetching data: ", error);
+        return error;
+    }
+}
+//Get user info to add to header
+async function getUser(key, url) {
+    try {
+        const response = await fetch(`${url}/api/v1/users/self/profile`, {
+            method: "GET",
+            headers: {
+                "Authorization" : `Bearer ${key}`,
+            }
+        })
+        if(!response.ok) {
+            throw new Error(`HTTP Error. Status: ${response.status}`);
+        }
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error("Error fetching data: ", error);
+        return error;
+    }
+}
+//Get assignments for a course code
+async function getAssignments(key, url, courseID) {
+    try {
+        const response = await fetch(`${url}/api/v1/courses/${courseID}/assignments`, {
+            method: "GET",
+            headers: {
+                "Authorization" : `Bearer ${key}`,
+            }
+        })
+        if(!response.ok) {
+            throw new Error(`HTTP Error. Status: ${response.status}`);
+        }
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error("Error fetching data: ", error);
+        return error;
+    }
+}
+//Get list of submissions for an assignment
+async function getSubmissions(key, url,course_id, assignment_id) {
+    let user = await getUser(key,url);
+    try {
+        const response = await fetch(`${url}/api/v1/courses/${course_id}/assignments/${assignment_id}/submissions/${user.id}`, {
+            method: "GET",
+            headers: {
+                "Authorization" : `Bearer ${key}`,
+            }
+        })
+        if(!response.ok) {
+            throw new Error(`HTTP Error. Status: ${response.status}`);
+        }
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error("Error fetching data: ", error);
+        return error;
+    }
 }

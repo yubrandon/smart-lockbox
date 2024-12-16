@@ -16,6 +16,17 @@ body {
   display:flex;
   justify-content: space-between;
 }
+.header-name {
+  display:flex;
+  gap:20px;
+  flex-direction:row;
+  align-items:center;
+}
+.logout-button {
+  border-radius:5px;
+  height:35px;
+  padding: 5px 10px;
+}
 
 .footer {
   display:flex;
