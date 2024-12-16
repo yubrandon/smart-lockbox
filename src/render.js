@@ -199,9 +199,9 @@ function login() {
     submit_div.appendChild(submit_btn);
 
     const form = document.querySelector('#modal-form');
-    //Upon submission of form, perform following logic
+    //Upon submission of form, check form values and login if valid
     form.addEventListener('submit', async (event) => {
-        event.preventDefault(); //enable to stop refresh for testing
+        event.preventDefault(); //Enable to stop refresh
         //Get values from input fields
         const key = document.querySelector('#key').value;
         let url = document.querySelector('#url').value;
@@ -233,20 +233,19 @@ function login() {
             form.reset();
             dialog.close();
 
-            //Pass information to assignnments screen
+            //Pass information to assignments screen
             assignmentView(key, url, courseData);
             pressed = false;
         }
-    })
+        //Event listener will clean itself up upon next screen being displayed
+    }, { once: true });
 
     field.appendChild(submit_div);
 }
 
 //Display name of logged in user at top
 function addUser(user) {
-    //TODO: create function to get current box status OR check box status after connecton with box is set up
-    //          - clear header and readd status indicator
-    //          - current bug where dupe names can appear
+    //Clear current header and re-add indicator
     const status = isConnected();
     clear(header);
     connectionIndicator(status);
@@ -274,7 +273,7 @@ function addUser(user) {
 //Return connection status of the box
 function isConnected() {
     const indicator = document.querySelector('.connection-text');
-    console.log(indicator);
+    //console.log(indicator);
     if(indicator.innerText == 'Connected') return 1;
     else if(indicator.innerText == 'Locked') return 2;
     else return 0;
@@ -282,7 +281,7 @@ function isConnected() {
 }
 
 //New screen to show assignments to select
-async function assignmentView(key, url, courseData) {   //TODO: ADD STYLING AND BUTTON TO GO TO NEXT SCREEN
+async function assignmentView(key, url, courseData) {
     clear(content);
     //Fetch 2d array of courses and assignments
     const courseWork = await getCoursework(key, url, courseData);
@@ -322,7 +321,8 @@ async function assignmentView(key, url, courseData) {   //TODO: ADD STYLING AND 
                 assignmentButton.classList.add('assignment-button-div');
                 const selectButton = document.createElement('button');
                 selectButton.addEventListener('click', (event) => {
-                    console.log(event);
+                    //TODO: button asks for confirmation then goes to next screen
+                    //console.log(event);
                     //code to enter locking waiting screen
                     //may redisplay modal to confirm assignment choice
                 })
@@ -362,7 +362,7 @@ async function getCoursework(key, url, courses) {
         }
         //Push assignment array into course array
         courseArray.push(assignmentArray);
-        console.log(assignments);
+        //console.log(assignments);
     }
     //Console.log(courseArray);
     return courseArray;
