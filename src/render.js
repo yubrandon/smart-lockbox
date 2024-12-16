@@ -81,6 +81,11 @@ connectionIndicator(0);
 
 //Displays the main login menu to connect to Canvas or set task
 function loginMenu() {
+    //Clear current header and re-add indicator
+    const status = isConnected();
+    clear(header);
+    connectionIndicator(status);
+    
     clear(content);
     const dialog = document.querySelector('.modal');
 
