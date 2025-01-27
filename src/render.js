@@ -188,7 +188,7 @@ function login() {
     url_form.type = "text";
     url_form.id = "url";
     url_form.name = "url";
-    url_form.placeholder = "URL";
+    url_form.placeholder = "Dashboard URL";
     url_div.appendChild(url_form);
     field.appendChild(url_div);
 
@@ -213,7 +213,7 @@ function login() {
         //If url doesn't have scheme (only ip) add it in manually
         if(url[0] != 'h') url = 'http://' + url;
         if(url[url.length-1] == '/') url = url.slice(0,url.length-1);
-        //Console.log(`${url}/api/v1/courses`);
+        //console.log(`${url}/api/v1/courses`);
         
         const dialog = document.querySelector('.modal');
         //Pass inputs to function, returns json
@@ -327,9 +327,10 @@ async function assignmentView(key, url, courseData) {
                 const selectButton = document.createElement('button');
                 selectButton.addEventListener('click', (event) => {
                     //TODO: button asks for confirmation then goes to next screen
-                    //console.log(event);
+                    console.log(event);
                     //code to enter locking waiting screen
                     //may redisplay modal to confirm assignment choice
+                    console.log('assignment chosen');
                 })
                 selectButton.classList.add('assignment-button');
                 const selectText = document.createElement('p');
@@ -416,7 +417,7 @@ async function getCoursework(key, url, courses) {
     //Prevents dialog from closing when clicking inside form
     modal.addEventListener('click', (event)=>event.stopPropagation());
     //Closes dialog if screen is clicked
-    dialog.addEventListener('click',()=> dialog.close());
+    //dialog.addEventListener('click',()=> dialog.close());
 })();
 
 //Clears content of a container - pass in object
