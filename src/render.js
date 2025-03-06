@@ -26,9 +26,18 @@ header.appendChild(text);*/
 //  UI SECTION | MENU SECTION
 //
 
+//Connection management
+function connectionMonitor() {
+    var connected = false;
+    const connect = () => connected = true;
+    const disconnect = () => connected = false;
+    const isConnected = () => {return connected};
+    return { connect, disconnect, isConnected };
+}
+const boxConnection = connectionMonitor();
+
 //Used to update the status indicator in the header
-//Arguments: 0 for disconnected, 1 for unlocked, 2 for locked
-function connectionIndicator(state) {
+function updateConnectionIndicator(state) {
     clear(header);
     //Create div
     const connectionDiv = document.createElement('div');
@@ -55,36 +64,28 @@ function connectionIndicator(state) {
     const text = document.createElement('h3');
     text.classList.add('connection-text');
     //Change indicator based on state
-    switch (state) {
-        case 1:
-            ctx.fillStyle = "#40FF00";
-            ctx.fill();
-            text.innerText += 'Connected';
-            break;
-        case 2: 
-            ctx.fillStyle = "#FF0000";
-            text.innerText = 'Locked';
-            break;
-        default:
-            ctx.fillStyle = "#D9D9D9";
-            ctx.fill();
-            text.innerText = 'Disconnected';
-            break;
+    if(boxConnection.isConnected()) {
+        ctx.fillStyle = "#40FF00";
+        ctx.fill();
+        text.innerText += 'Connected';
+    } 
+    else {
+        ctx.fillStyle = "#D9D9D9";
+        ctx.fill();
+        text.innerText = 'Disconnected';
     }
+            
     //Append elements to div
     connectionDiv.appendChild(circle);
     connectionDiv.appendChild(text);
     header.appendChild(connectionDiv);
     
 }
-connectionIndicator(0);
 
 //Displays the main login menu to connect to Canvas or set task
 function loginMenu() {
-    //Clear current header and re-add indicator
-    const status = isConnected();
-    clear(header);
-    connectionIndicator(status);
+    //Refresh indicator
+    updateConnectionIndicator();
     
     clear(content);
     const dialog = document.querySelector('.modal');
@@ -250,10 +251,8 @@ function login() {
 
 //Display name of logged in user at top
 function addUser(user) {
-    //Clear current header and re-add indicator
-    const status = isConnected();
-    clear(header);
-    connectionIndicator(status);
+    //Refresh indicator
+    updateConnectionIndicator();
 
     //Create object
     const nameDiv = document.createElement('div');
@@ -273,16 +272,6 @@ function addUser(user) {
     nameDiv.appendChild(logout);
 
     header.appendChild(nameDiv);
-}
-
-//Return connection status of the box
-function isConnected() {
-    const indicator = document.querySelector('.connection-text');
-    //console.log(indicator);
-    if(indicator.innerText == 'Connected') return 1;
-    else if(indicator.innerText == 'Locked') return 2;
-    else return 0;
-
 }
 
 //New screen to show assignments to select
@@ -331,6 +320,13 @@ async function assignmentView(key, url, courseData) {
                     //code to enter locking waiting screen
                     //may redisplay modal to confirm assignment choice
                     console.log('assignment chosen');
+
+                    if(boxConnection.isConnected()) {
+                        //display confirmation
+                    }
+                    else {
+                        //display error
+                    }
                 })
                 selectButton.classList.add('assignment-button');
                 const selectText = document.createElement('p');
@@ -439,7 +435,7 @@ function clearModal(){
 
 
 //
-//  API CALL FUNCTIONS
+//  API CALLS
 //
 
 //Get courses for current user
