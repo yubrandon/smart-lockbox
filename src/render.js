@@ -8,7 +8,7 @@ text.innerText = "Hello World!";
 header.appendChild(text);*/
 
 //Function importing not working, will have to write all code in this file unless solution is found
-//Separated into sections: UI/MENU SECTION, CANVAS, BLUETOOTH, BOX
+//Separated into sections: UI/MENU , CANVAS, BLUETOOTH, BOX
 //window.electron.loginMenu();
 
 
@@ -20,10 +20,7 @@ header.appendChild(text);*/
 
 
 
-
-//
-//  UI/MENU
-//
+// DATA OBJECTS
 
 //Connection management
 function connectionMonitor() {
@@ -40,6 +37,34 @@ function connectionMonitor() {
     return { connect, disconnect, isConnected };
 }
 const boxConnection = connectionMonitor();
+
+//User info management
+function userInfo() {
+    var data = {
+        name : "",
+        key : "",
+        url : "",
+    }
+    const setName = (newName) => data.name = newName;
+    const getName = () => data.name;
+    const clearName = () => data.name = "";
+
+    const setKey = (newKey) => data.key = newKey;
+    const getKey = () => data.key;
+    const clearKey = () => data.key = "";
+
+    const setUrl = (newUrl) => data.url = newUrl;
+    const getUrl = () => data.url;
+    const clearUrl = () => data.url = "";
+
+    return { setName, getName, clearName, setKey, getKey, clearKey, setUrl, getUrl, clearUrl };
+}
+const currentUser = userInfo();
+
+//
+//  UI/MENU
+//
+
 
 //Used to update the status indicator in the header
 function updateConnectionIndicator() {
@@ -157,16 +182,6 @@ loginMenu();
 
 })();
 
-//User info management
-function userInfo() {
-    var name = "";
-    const setName = (newName) => name = newName;
-    const getName = () => name;
-    const clearName = () => name = "";
-    return { setName, getName, clearName };
-}
-const currentUser = userInfo();
-
 //Display name of logged in user at top
 function addUser() {
     //Refresh indicator
@@ -197,7 +212,6 @@ function addUser() {
 function refreshHeader() {
     clear(header);
     updateConnectionIndicator();
-    console.log("name:" + currentUser.getName());
     if(currentUser.getName() != "") addUser();
 }
 
@@ -205,13 +219,224 @@ function refreshHeader() {
 
 
 //
-//  CANVAS SECTION
+//  CANVAS
 //
 
 function login() {
-    clearModal();
+    //Fill modal with fields for login
+    loginModal();
 
-    const field = document.querySelector('.modal-field');
+    //Handle form submission
+    const form = document.querySelector('#modal-form');
+    //Upon submission of form, check form values and login if valid
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault(); //Enable to stop refresh
+        //Get values from input fields
+        const key = document.querySelector('#key').value;
+        let url = document.querySelector('#url').value;
+        //If url doesn't have scheme (only ip) add it in manually
+        if(url[0] != 'h') url = 'http://' + url;
+        if(url[url.length-1] == '/') url = url.slice(0,url.length-1);
+        //console.log(`${url}/api/v1/courses`);
+        
+        const dialog = document.querySelector('.modal');
+        //Pass inputs to function, returns json
+        const courseData = await getCourses(key,url);
+        //Console.log(courseData);
+
+        var pressed = false;
+        //Check for error
+        if(courseData instanceof Error) {
+            //Clears fields
+            form.reset();
+            
+            alert('Login Error! Check your access code or URL.');
+        }
+        else {
+            pressed = true;
+            //Store data and get Canvas information for student
+            currentUser.setKey(key);
+            currentUser.setUrl(url);
+            const user = await getUser();
+            currentUser.setName(user.name);
+
+            //console.log(user);
+            addUser();
+
+            form.reset();
+            dialog.close();
+
+            //Pass information to assignments screen
+            assignmentView(courseData);
+            pressed = false;
+        }
+        //Event listener will clean itself up upon next screen being displayed
+    }, { once: true });
+}
+
+
+//New screen to show assignments to select
+async function assignmentView(courseData) {
+    clear(content);
+    //Fetch 2d array of courses and assignments
+    const courseWork = await getCoursework(courseData);
+    //console.log(courseWork);
+    //Iterate through array and create div for each course
+    for(let i = 0; i<courseWork.length; i++) {
+        const courseDiv = document.createElement('div');
+        courseDiv.classList.add('course-div');
+
+        const courseHeader = document.createElement('div');
+        courseHeader.classList.add('course-header-div');
+        const courseText = document.createElement('h2');
+        courseText.classList.add('course-header');
+        courseText.innerText = "Course:" + courseWork[i][0].name;
+        //Add interactable arrow next to course name
+
+        courseHeader.appendChild(courseText);
+        courseDiv.appendChild(courseHeader);
+
+        const assignmentContainer = document.createElement('div');
+        assignmentContainer.classList.add('course-assignments');
+
+        //Iterate through nested array to get assignments for course
+        for(let j=1; j<courseWork[i].length; j++) {
+            let sub = await getSubmissions(courseWork[i][0].id, courseWork[i][j].id);
+            //console.log(sub);
+            if(sub.attempt != courseWork[i][j].allowed_attempts || courseWork[i][j].allowed_attempts == -1) {
+                const assignmentDiv = document.createElement('div');
+                assignmentDiv.classList.add('assignment-div');
+                const assignmentHeader = document.createElement('h3');
+                assignmentHeader.classList.add('assignment-name');
+                const assignmentName = courseWork[i][j].name
+                assignmentHeader.innerText = assignmentName;
+                assignmentDiv.appendChild(assignmentHeader);
+    
+                //Add button that appears when div is active to choose a specific assignment
+                const assignmentButton = document.createElement('div');
+                assignmentButton.classList.add('assignment-button-div');
+                const selectButton = document.createElement('button');
+                const dialog = document.querySelector('.modal');
+                selectButton.addEventListener('click', (event) => {
+                    //console.log('assignment chosen');
+                    if(boxConnection.isConnected()) {
+                        //Display confirmation
+                        event.preventDefault();
+                        confirmationModal(assignmentName);
+                        dialog.showModal();
+                    }
+                    else {
+                        //Indicate error
+                        alert('Box not connected!');
+                    }
+                });
+                selectButton.classList.add('assignment-button');
+                const selectText = document.createElement('p');
+                selectText.innerText = 'Select';
+                selectText.classList.add('assignment-button-text');
+
+                selectButton.appendChild(selectText);
+                assignmentButton.appendChild(selectButton);
+                assignmentDiv.appendChild(assignmentButton);
+                assignmentContainer.appendChild(assignmentDiv);
+            }
+        }
+        //Add to body
+        courseDiv.appendChild(assignmentContainer);
+        content.appendChild(courseDiv);
+    }
+
+}
+
+//Return a 2d array of each course and its assignments for the user
+async function getCoursework(courses) {
+    //Declare array
+    let courseArray = new Array();
+    //Iterate through courses
+    for(let i=0; i<courses.length; i++) {
+        const code = courses[i].id;
+        //Array for assignments
+        //First index in array will have course information
+        let assignmentArray = new Array(courses[i]);
+        //Get all assignments for each course
+        let assignments = await getAssignments(code);
+        //Push all assignment objects into array
+        for(let j=0; j<assignments.length; j++) {
+            assignmentArray.push(assignments[j]);
+        }
+        //Push assignment array into course array
+        courseArray.push(assignmentArray);
+        //console.log(assignments);
+    }
+    //Console.log(courseArray);
+    return courseArray;
+}
+
+
+
+
+
+
+
+//
+//  BLUETOOTH
+//
+//TO DO: BLUETOOTH CONNECTION PROCESS
+//CHECK CURRENTLY CONNECTED DEVICES OR SEARCH FOR BLUETOOTH DEVICES
+//LET USER SELECT DEVICE
+//ESTABLISH CONNECTION
+
+
+
+
+//
+//  BOX 
+//
+
+//*ASSUMES BLUETOOTH CONNECTION WITH BOX ESTABLISHED*
+//CODE TO CONTROL BOX LOCK/COMMUNICATION
+
+
+
+
+
+
+
+
+
+//
+//  HELPER FUNCTIONS
+//
+//Defines modal for pop up dialogs
+(function modalSetup(){
+    const dialog = document.querySelector('.modal');
+    const modal = document.querySelector('.modal-container');
+    //Prevents dialog from closing when clicking inside form
+    modal.addEventListener('click', (event)=>event.stopPropagation());
+    //Closes dialog if screen is clicked
+    //dialog.addEventListener('click',()=> dialog.close());
+})();
+
+//Clears content of a container - pass in object
+function clear(parent) {
+    if(parent.hasChildNodes()) {
+        /*const del = document.querySelectorAll(`.${parent.classList[0]} > *`);
+        for(let i=0; i<del.length; i++) {
+            parent.removeChild(del[i]);
+        }*/
+       parent.innerHTML = "";
+    }
+}
+
+//Clears modal contents
+function clearModal(){ 
+    clear(document.querySelector('.modal-header'));
+    clear(document.querySelector('.modal-field'));
+}
+
+//Add fields for login process
+function loginModal(){
+    clearModal();
 
     //Create title for modal
     const modal_header = document.querySelector('.modal-header');
@@ -221,7 +446,9 @@ function login() {
     title.classList.add('modal-title');
     title_div.appendChild(title);
     modal_header.appendChild(title_div);
-    
+
+    const field = document.querySelector('.modal-field');
+
     //Create field for api token input
     const key_div = document.createElement('div');
     key_div.classList.add('form');
@@ -255,211 +482,51 @@ function login() {
     submit_btn.innerText = "Submit";
     submit_div.appendChild(submit_btn);
 
-    const form = document.querySelector('#modal-form');
-    //Upon submission of form, check form values and login if valid
-    form.addEventListener('submit', async (event) => {
-        event.preventDefault(); //Enable to stop refresh
-        //Get values from input fields
-        const key = document.querySelector('#key').value;
-        let url = document.querySelector('#url').value;
-        //If url doesn't have scheme (only ip) add it in manually
-        if(url[0] != 'h') url = 'http://' + url;
-        if(url[url.length-1] == '/') url = url.slice(0,url.length-1);
-        //console.log(`${url}/api/v1/courses`);
-        
-        const dialog = document.querySelector('.modal');
-        //Pass inputs to function, returns json
-        const courseData = await getCourses(key,url);
-        //Console.log(courseData);
-
-        var pressed = false;
-        //Check for error
-        if(courseData instanceof Error) {
-            //Clears fields
-            form.reset();
-            
-            alert('Login Error! Check your access code or URL.');
-        }
-        else {
-            pressed = true;
-            //Get user data
-            const user = await getUser(key, url);
-            //console.log(user);
-            currentUser.setName(user.name);
-            addUser();
-
-            form.reset();
-            dialog.close();
-
-            //Pass information to assignments screen
-            assignmentView(key, url, courseData);
-            pressed = false;
-        }
-        //Event listener will clean itself up upon next screen being displayed
-    }, { once: true });
-
     field.appendChild(submit_div);
 }
 
+function confirmationModal(assignment) {
+    clearModal();
 
-//New screen to show assignments to select
-async function assignmentView(key, url, courseData) {
-    clear(content);
-    //Fetch 2d array of courses and assignments
-    const courseWork = await getCoursework(key, url, courseData);
-    //console.log(courseWork);
-    //Iterate through array and create div for each course
-    for(let i = 0; i<courseWork.length; i++) {
-        const courseDiv = document.createElement('div');
-        courseDiv.classList.add('course-div');
-
-        const courseHeader = document.createElement('div');
-        courseHeader.classList.add('course-header-div');
-        const courseText = document.createElement('h2');
-        courseText.classList.add('course-header');
-        courseText.innerText = "Course:" + courseWork[i][0].name;
-        //Add interactable arrow next to course name
-
-        courseHeader.appendChild(courseText);
-        courseDiv.appendChild(courseHeader);
-
-        const assignmentContainer = document.createElement('div');
-        assignmentContainer.classList.add('course-assignments');
-
-        //Iterate through nested array to get assignments for course
-        for(let j=1; j<courseWork[i].length; j++) {
-            let sub = await getSubmissions(key, url,courseWork[i][0].id, courseWork[i][j].id);
-            //console.log(sub);
-            if(sub.attempt != courseWork[i][j].allowed_attempts || courseWork[i][j].allowed_attempts == -1) {
-                const assignmentDiv = document.createElement('div');
-                assignmentDiv.classList.add('assignment-div');
-                const assignmentName = document.createElement('h3');
-                assignmentName.classList.add('assignment-name');
-                assignmentName.innerText = courseWork[i][j].name;
-                assignmentDiv.appendChild(assignmentName);
+    //Change header title
+    const modal_header = document.querySelector('.modal-header');
+    const header = document.createElement('h4');
+    header.innerText = "Assignment Confirmation";
+    modal_header.appendChild(header);
     
-                //Add button that appears when div is active to choose a specific assignment
-                const assignmentButton = document.createElement('div');
-                assignmentButton.classList.add('assignment-button-div');
-                const selectButton = document.createElement('button');
-                selectButton.addEventListener('click', (event) => {
-                    //TODO: button asks for confirmation then goes to next screen
-                    //console.log(event);
-                    //code to enter locking waiting screen
-                    //may redisplay modal to confirm assignment choice
-                    console.log('assignment chosen');
+    //Add assignment selected
+    const assignmentName = document.createElement('h2');
+    assignmentName.innerText = `${assignment}`;
+    modal_header.appendChild(assignmentName);
 
-                    if(boxConnection.isConnected()) {
-                        //display confirmation
-                    }
-                    else {
-                        //display error
-                    }
-                })
-                selectButton.classList.add('assignment-button');
-                const selectText = document.createElement('p');
-                selectText.innerText = 'Select';
-                selectText.classList.add('assignment-button-text');
+    const field = document.querySelector('.modal-field');
+    const selectionButtons = document.createElement('div');
+    selectionButtons.classList.add('modal-buttons-div')
+    //Add buttons to confirm
+    const confirm = document.createElement('button');
+    confirm.classList.add('modal-confirm');
+    confirm.innerText = 'Yes';
+    confirm.addEventListener('click', (event) => {
+        event.preventDefault();
+        //Go to next screen if user confirms
+    }, { once: true });
+    selectionButtons.appendChild(confirm);
+    const reject = document.createElement('button');
+    reject.classList.add('modal-reject');
+    reject.innerText = 'No';
+    reject.addEventListener('click', (event) => {
+        event.preventDefault();
+        //Close the modal if user rejects
+        const dialog = document.querySelector('.modal');
+        dialog.close();
+    }, { once: true });
 
-                selectButton.appendChild(selectText);
-                assignmentButton.appendChild(selectButton);
-                assignmentDiv.appendChild(assignmentButton);
-                assignmentContainer.appendChild(assignmentDiv);
-            }
-        }
-        //Add to body
-        courseDiv.appendChild(assignmentContainer);
-        content.appendChild(courseDiv);
-    }
+    selectionButtons.appendChild(reject);
 
+
+
+    field.appendChild(selectionButtons);
 }
-
-//Return a 2d array of each course and its assignments for the user
-async function getCoursework(key, url, courses) {
-    //Declare array
-    let courseArray = new Array();
-    //Iterate through courses
-    for(let i=0; i<courses.length; i++) {
-        const code = courses[i].id;
-        //Array for assignments
-        //First index in array will have course information
-        let assignmentArray = new Array(courses[i]);
-        //Get all assignments for each course
-        let assignments = await getAssignments(key, url, code);
-        //Push all assignment objects into array
-        for(let j=0; j<assignments.length; j++) {
-            assignmentArray.push(assignments[j]);
-        }
-        //Push assignment array into course array
-        courseArray.push(assignmentArray);
-        //console.log(assignments);
-    }
-    //Console.log(courseArray);
-    return courseArray;
-}
-
-//TODO: 
-//NEXT SCREEN AFTER SELECTING ASSIGNMENT
-//REQUIRES ESTABLISHED CONNECTION
-
-
-
-
-//
-//  BLUETOOTH SECTION
-//
-//TO DO: BLUETOOTH CONNECTION PROCESS
-//CHECK CURRENTLY CONNECTED DEVICES OR SEARCH FOR BLUETOOTH DEVICES
-//LET USER SELECT DEVICE
-//ESTABLISH CONNECTION
-
-
-
-
-//
-//  BOX SECTION
-//
-
-//*ASSUMES BLUETOOTH CONNECTION WITH BOX ESTABLISHED*
-//CODE TO CONTROL BOX LOCK/COMMUNICATION
-
-
-
-
-
-
-
-
-
-//
-//  HELPER FUNCTIONS
-//
-//Defines modal for pop up dialogs
-(function modalSetup(){
-    const dialog = document.querySelector('.modal');
-    const modal = document.querySelector('.modal-container');
-    //Prevents dialog from closing when clicking inside form
-    modal.addEventListener('click', (event)=>event.stopPropagation());
-    //Closes dialog if screen is clicked
-    //dialog.addEventListener('click',()=> dialog.close());
-})();
-
-//Clears content of a container - pass in object
-function clear(parent) {
-    if(parent.hasChildNodes()) {
-        const del = document.querySelectorAll(`.${parent.classList[0]} > div`);
-        for(let i=0; i<del.length; i++) {
-            parent.removeChild(del[i]);
-        }
-    }
-}
-
-//Clears modal contents
-function clearModal(){ 
-    clear(document.querySelector('.modal-header'));
-    clear(document.querySelector('.modal-field'));
-}
-
 
 
 //
@@ -490,12 +557,12 @@ async function getCourses(key, url) {
     }
 }
 //Get user info to add to header
-async function getUser(key, url) {
+async function getUser() {
     try {
-        const response = await fetch(`${url}/api/v1/users/self/profile`, {
+        const response = await fetch(`${currentUser.getUrl()}/api/v1/users/self/profile`, {
             method: "GET",
             headers: {
-                "Authorization" : `Bearer ${key}`,
+                "Authorization" : `Bearer ${currentUser.getKey()}`,
             }
         })
         if(!response.ok) {
@@ -509,12 +576,12 @@ async function getUser(key, url) {
     }
 }
 //Get assignments for a course code
-async function getAssignments(key, url, courseID) {
+async function getAssignments(courseID) {
     try {
-        const response = await fetch(`${url}/api/v1/courses/${courseID}/assignments`, {
+        const response = await fetch(`${currentUser.getUrl()}/api/v1/courses/${courseID}/assignments`, {
             method: "GET",
             headers: {
-                "Authorization" : `Bearer ${key}`,
+                "Authorization" : `Bearer ${currentUser.getKey()}`,
             }
         })
         if(!response.ok) {
@@ -528,13 +595,13 @@ async function getAssignments(key, url, courseID) {
     }
 }
 //Get list of submissions for an assignment
-async function getSubmissions(key, url,course_id, assignment_id) {
-    let user = await getUser(key,url);
+async function getSubmissions(course_id, assignment_id) {
+    let user = await getUser();
     try {
-        const response = await fetch(`${url}/api/v1/courses/${course_id}/assignments/${assignment_id}/submissions/${user.id}`, {
+        const response = await fetch(`${currentUser.getUrl()}/api/v1/courses/${course_id}/assignments/${assignment_id}/submissions/${user.id}`, {
             method: "GET",
             headers: {
-                "Authorization" : `Bearer ${key}`,
+                "Authorization" : `Bearer ${currentUser.getKey()}`,
             }
         })
         if(!response.ok) {

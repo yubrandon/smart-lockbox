@@ -18,6 +18,10 @@
   }
   .modal-header {
     padding:10px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
   }
   .modal-field {
     display:flex;
@@ -44,4 +48,8 @@
     border-radius: 5px;
     padding:5px 10px;
     margin-top:20px;
+  }
+
+  .modal-confirm, .modal-reject {
+    padding:5px 10px;
   }
