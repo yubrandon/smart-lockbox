@@ -2,64 +2,10 @@ const header = document.querySelector('.header');
 const content = document.querySelector('.content');
 const footer = document.querySelector('.footer');
 
-//test code
-/*const text = document.createElement('h1');
-text.innerText = "Hello World!";
-header.appendChild(text);*/
-
-//Function importing not working, will have to write all code in this file unless solution is found
-//Separated into sections: UI/MENU , CANVAS, BLUETOOTH, BOX
-//window.electron.loginMenu();
-
-
-
-
-
-
-
-
-
-
-// DATA OBJECTS
-
-//Connection management
-function connectionMonitor() {
-    var connected = false;
-    const connect = () => {
-        connected = true;
-        refreshHeader();
-    }
-    const disconnect = () => {
-        connected = false;
-        refreshHeader();
-    }
-    const isConnected = () => {return connected};
-    return { connect, disconnect, isConnected };
-}
+const { getCourses, getUser, getSubmissions, getCoursework } = require('./js/api.js');
 const boxConnection = connectionMonitor();
-
-//User info management
-function userInfo() {
-    var data = {
-        name : "",
-        key : "",
-        url : "",
-    }
-    const setName = (newName) => data.name = newName;
-    const getName = () => data.name;
-    const clearName = () => data.name = "";
-
-    const setKey = (newKey) => data.key = newKey;
-    const getKey = () => data.key;
-    const clearKey = () => data.key = "";
-
-    const setUrl = (newUrl) => data.url = newUrl;
-    const getUrl = () => data.url;
-    const clearUrl = () => data.url = "";
-
-    return { setName, getName, clearName, setKey, getKey, clearKey, setUrl, getUrl, clearUrl };
-}
 const currentUser = userInfo();
+
 
 //
 //  UI/MENU
@@ -129,7 +75,7 @@ function loginMenu() {
     //Create image
     const canvas_icon = document.createElement('img');
     canvas_icon.classList.add('canvas-login-icon');
-    canvas_icon.src = "./assets/canvas.png";
+    canvas_icon.src = "./static/canvas.png";
     //Create text
     const canvas_text = document.createElement('h2');
     canvas_text.innerText = 'Login with Canvas'
@@ -167,7 +113,7 @@ loginMenu();
     //Create image
     const bluetooth_icon = document.createElement('img');
     bluetooth_icon.classList.add('bluetooth-icon');
-    bluetooth_icon.src = "./assets/bluetooth.png";
+    bluetooth_icon.src = "./static/bluetooth.png";
     //Create text
     const bluetooth_text = document.createElement('h3');
     bluetooth_text.classList.add('bluetooth-text');
@@ -208,18 +154,13 @@ function addUser() {
 
     header.appendChild(nameDiv);
 }
-//Update changes in header
-function refreshHeader() {
-    clear(header);
-    updateConnectionIndicator();
-    if(currentUser.getName() != "") addUser();
-}
+
 
 
 
 
 //
-//  CANVAS
+//  CANVAS ASSIGNMENT NAVIGATION
 //
 
 function login() {
@@ -348,91 +289,7 @@ async function assignmentView(courseData) {
 
 }
 
-//Return a 2d array of each course and its assignments for the user
-async function getCoursework(courses) {
-    //Declare array
-    let courseArray = new Array();
-    //Iterate through courses
-    for(let i=0; i<courses.length; i++) {
-        const code = courses[i].id;
-        //Array for assignments
-        //First index in array will have course information
-        let assignmentArray = new Array(courses[i]);
-        //Get all assignments for each course
-        let assignments = await getAssignments(code);
-        //Push all assignment objects into array
-        for(let j=0; j<assignments.length; j++) {
-            assignmentArray.push(assignments[j]);
-        }
-        //Push assignment array into course array
-        courseArray.push(assignmentArray);
-        //console.log(assignments);
-    }
-    //Console.log(courseArray);
-    return courseArray;
-}
 
-
-
-
-
-
-
-//
-//  BLUETOOTH
-//
-//TO DO: BLUETOOTH CONNECTION PROCESS
-//CHECK CURRENTLY CONNECTED DEVICES OR SEARCH FOR BLUETOOTH DEVICES
-//LET USER SELECT DEVICE
-//ESTABLISH CONNECTION
-
-
-
-
-//
-//  BOX 
-//
-
-//*ASSUMES BLUETOOTH CONNECTION WITH BOX ESTABLISHED*
-//CODE TO CONTROL BOX LOCK/COMMUNICATION
-
-
-
-
-
-
-
-
-
-//
-//  HELPER FUNCTIONS
-//
-//Defines modal for pop up dialogs
-(function modalSetup(){
-    const dialog = document.querySelector('.modal');
-    const modal = document.querySelector('.modal-container');
-    //Prevents dialog from closing when clicking inside form
-    modal.addEventListener('click', (event)=>event.stopPropagation());
-    //Closes dialog if screen is clicked
-    //dialog.addEventListener('click',()=> dialog.close());
-})();
-
-//Clears content of a container - pass in object
-function clear(parent) {
-    if(parent.hasChildNodes()) {
-        /*const del = document.querySelectorAll(`.${parent.classList[0]} > *`);
-        for(let i=0; i<del.length; i++) {
-            parent.removeChild(del[i]);
-        }*/
-       parent.innerHTML = "";
-    }
-}
-
-//Clears modal contents
-function clearModal(){ 
-    clear(document.querySelector('.modal-header'));
-    clear(document.querySelector('.modal-field'));
-}
 
 //Add fields for login process
 function loginModal(){
@@ -552,88 +409,86 @@ function promptLocking() {
 }
 
 
-//
-//  API CALLS
-//
 
-//Get courses for current user
-async function getCourses(key, url) {
-    try {
-        const response = await fetch(`${url}/api/v1/courses`, {
-            method: "GET",
-            headers: {
-                "Authorization" : `Bearer ${key}`,
-            }
-        })
-        //Data returned in json file
-        //.then(response => response.json())
-        //.then(data => console.log(data))  //validation
-        //.catch(error => console.log("Error: ", error));
-        if(!response.ok) {
-            throw new Error(`HTTP Error. Status: ${response.status}`);
-        }
-        const data = await response.json();
-        return data;
-    } catch (error) {
-        console.error("Error fetching data: ", error);
-        return error;
+
+
+// DATA OBJECTS
+//Connection management
+function connectionMonitor() {
+    var connected = false;
+    const connect = () => {
+        connected = true;
+        refreshHeader();
+    }
+    const disconnect = () => {
+        connected = false;
+        refreshHeader();
+    }
+    const isConnected = () => {return connected};
+    return { connect, disconnect, isConnected };
+}
+
+
+//User info management
+function userInfo() {
+    var data = {
+        name : "",
+        key : "",
+        url : "",
+    }
+    const setName = (newName) => data.name = newName;
+    const getName = () => data.name;
+    const clearName = () => data.name = "";
+
+    const setKey = (newKey) => data.key = newKey;
+    const getKey = () => data.key;
+    const clearKey = () => data.key = "";
+
+    const setUrl = (newUrl) => data.url = newUrl;
+    const getUrl = () => data.url;
+    const clearUrl = () => data.url = "";
+
+    return { setName, getName, clearName, setKey, getKey, clearKey, setUrl, getUrl, clearUrl };
+}
+
+
+
+
+//
+//  HELPER FUNCTIONS
+//
+//Defines modal for pop up dialogs
+(function modalSetup(){
+    const dialog = document.querySelector('.modal');
+    const modal = document.querySelector('.modal-container');
+    //Prevents dialog from closing when clicking inside form
+    modal.addEventListener('click', (event)=>event.stopPropagation());
+    //Closes dialog if screen is clicked
+    //dialog.addEventListener('click',()=> dialog.close());
+})();
+
+//Clears content of a container - pass in object
+function clear(parent) {
+    if(parent.hasChildNodes()) {
+        /*const del = document.querySelectorAll(`.${parent.classList[0]} > *`);
+        for(let i=0; i<del.length; i++) {
+            parent.removeChild(del[i]);
+        }*/
+       parent.innerHTML = "";
     }
 }
-//Get user info to add to header
-async function getUser() {
-    try {
-        const response = await fetch(`${currentUser.getUrl()}/api/v1/users/self/profile`, {
-            method: "GET",
-            headers: {
-                "Authorization" : `Bearer ${currentUser.getKey()}`,
-            }
-        })
-        if(!response.ok) {
-            throw new Error(`HTTP Error. Status: ${response.status}`);
-        }
-        const data = await response.json();
-        return data;
-    } catch (error) {
-        console.error("Error fetching data: ", error);
-        return error;
-    }
+
+//Clears modal contents
+function clearModal(){ 
+    clear(document.querySelector('.modal-header'));
+    clear(document.querySelector('.modal-field'));
 }
-//Get assignments for a course code
-async function getAssignments(courseID) {
-    try {
-        const response = await fetch(`${currentUser.getUrl()}/api/v1/courses/${courseID}/assignments`, {
-            method: "GET",
-            headers: {
-                "Authorization" : `Bearer ${currentUser.getKey()}`,
-            }
-        })
-        if(!response.ok) {
-            throw new Error(`HTTP Error. Status: ${response.status}`);
-        }
-        const data = await response.json();
-        return data;
-    } catch (error) {
-        console.error("Error fetching data: ", error);
-        return error;
-    }
+
+//Update changes in header
+function refreshHeader() {
+    clear(header);
+    updateConnectionIndicator();
+    if(currentUser.getName() != "") addUser();
 }
-//Get list of submissions for an assignment
-async function getSubmissions(course_id, assignment_id) {
-    let user = await getUser();
-    try {
-        const response = await fetch(`${currentUser.getUrl()}/api/v1/courses/${course_id}/assignments/${assignment_id}/submissions/${user.id}`, {
-            method: "GET",
-            headers: {
-                "Authorization" : `Bearer ${currentUser.getKey()}`,
-            }
-        })
-        if(!response.ok) {
-            throw new Error(`HTTP Error. Status: ${response.status}`);
-        }
-        const data = await response.json();
-        return data;
-    } catch (error) {
-        console.error("Error fetching data: ", error);
-        return error;
-    }
-}
+
+
