@@ -8,8 +8,7 @@ text.innerText = "Hello World!";
 header.appendChild(text);*/
 
 //Function importing not working, will have to write all code in this file unless solution is found
-//use following searches to get to sections:
-// UI SECTION, MENU SECTION, CANVAS SECTION, BLUETOOTH SECTION, BOX SECTION
+//Separated into sections: UI/MENU SECTION, CANVAS, BLUETOOTH, BOX
 //window.electron.loginMenu();
 
 
@@ -23,21 +22,27 @@ header.appendChild(text);*/
 
 
 //
-//  UI SECTION | MENU SECTION
+//  UI/MENU
 //
 
 //Connection management
 function connectionMonitor() {
     var connected = false;
-    const connect = () => connected = true;
-    const disconnect = () => connected = false;
+    const connect = () => {
+        connected = true;
+        refreshHeader();
+    }
+    const disconnect = () => {
+        connected = false;
+        refreshHeader();
+    }
     const isConnected = () => {return connected};
     return { connect, disconnect, isConnected };
 }
 const boxConnection = connectionMonitor();
 
 //Used to update the status indicator in the header
-function updateConnectionIndicator(state) {
+function updateConnectionIndicator() {
     clear(header);
     //Create div
     const connectionDiv = document.createElement('div');
@@ -79,7 +84,6 @@ function updateConnectionIndicator(state) {
     connectionDiv.appendChild(circle);
     connectionDiv.appendChild(text);
     header.appendChild(connectionDiv);
-    
 }
 
 //Displays the main login menu to connect to Canvas or set task
@@ -130,6 +134,11 @@ loginMenu();
     //Create button
     const bluetooth_btn = document.createElement('button');
     bluetooth_btn.classList.add('bluetooth-button');
+    bluetooth_btn.addEventListener('click', () => {
+        if(boxConnection.isConnected()) boxConnection.disconnect();
+        else boxConnection.connect();
+    })
+
     //Create image
     const bluetooth_icon = document.createElement('img');
     bluetooth_icon.classList.add('bluetooth-icon');
@@ -148,7 +157,49 @@ loginMenu();
 
 })();
 
+//User info management
+function userInfo() {
+    var name = "";
+    const setName = (newName) => name = newName;
+    const getName = () => name;
+    const clearName = () => name = "";
+    return { setName, getName, clearName };
+}
+const currentUser = userInfo();
 
+//Display name of logged in user at top
+function addUser() {
+    //Refresh indicator
+    updateConnectionIndicator();
+
+    //Create object
+    const nameDiv = document.createElement('div');
+    nameDiv.classList.add('header-name');
+    const name = document.createElement('h3');
+    name.classList.add('header-name');
+    name.innerText = "Student: " + currentUser.getName();
+
+    const logout = document.createElement('button');
+    logout.classList.add('logout-button');
+    logout.innerText = 'Log out';
+    logout.addEventListener('click', () => {
+        currentUser.clearName();
+        loginMenu();
+
+    })
+
+    nameDiv.appendChild(name);
+    nameDiv.appendChild(logout);
+
+    header.appendChild(nameDiv);
+}
+//Update changes in header
+function refreshHeader() {
+    clear(header);
+    updateConnectionIndicator();
+    console.log("name:" + currentUser.getName());
+    if(currentUser.getName() != "") addUser();
+}
 
 
 
@@ -233,8 +284,9 @@ function login() {
             pressed = true;
             //Get user data
             const user = await getUser(key, url);
-            //Console.log(user);
-            addUser(user);
+            //console.log(user);
+            currentUser.setName(user.name);
+            addUser();
 
             form.reset();
             dialog.close();
@@ -249,37 +301,13 @@ function login() {
     field.appendChild(submit_div);
 }
 
-//Display name of logged in user at top
-function addUser(user) {
-    //Refresh indicator
-    updateConnectionIndicator();
-
-    //Create object
-    const nameDiv = document.createElement('div');
-    nameDiv.classList.add('header-name');
-    const name = document.createElement('h3');
-    name.classList.add('header-name');
-    name.innerText = "Student: " + user.sortable_name;
-
-    const logout = document.createElement('button');
-    logout.classList.add('logout-button');
-    logout.innerText = 'Log out';
-    logout.addEventListener('click', () => {
-        loginMenu();
-    })
-
-    nameDiv.appendChild(name);
-    nameDiv.appendChild(logout);
-
-    header.appendChild(nameDiv);
-}
 
 //New screen to show assignments to select
 async function assignmentView(key, url, courseData) {
     clear(content);
     //Fetch 2d array of courses and assignments
     const courseWork = await getCoursework(key, url, courseData);
-    console.log(courseWork);
+    //console.log(courseWork);
     //Iterate through array and create div for each course
     for(let i = 0; i<courseWork.length; i++) {
         const courseDiv = document.createElement('div');
@@ -301,7 +329,7 @@ async function assignmentView(key, url, courseData) {
         //Iterate through nested array to get assignments for course
         for(let j=1; j<courseWork[i].length; j++) {
             let sub = await getSubmissions(key, url,courseWork[i][0].id, courseWork[i][j].id);
-            console.log(sub);
+            //console.log(sub);
             if(sub.attempt != courseWork[i][j].allowed_attempts || courseWork[i][j].allowed_attempts == -1) {
                 const assignmentDiv = document.createElement('div');
                 assignmentDiv.classList.add('assignment-div');
@@ -316,7 +344,7 @@ async function assignmentView(key, url, courseData) {
                 const selectButton = document.createElement('button');
                 selectButton.addEventListener('click', (event) => {
                     //TODO: button asks for confirmation then goes to next screen
-                    console.log(event);
+                    //console.log(event);
                     //code to enter locking waiting screen
                     //may redisplay modal to confirm assignment choice
                     console.log('assignment chosen');
