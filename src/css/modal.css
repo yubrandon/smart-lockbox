@@ -50,6 +50,23 @@
     margin-top:20px;
   }
 
-  .modal-confirm, .modal-reject {
+  .modal-confirm, .modal-reject, .modal-locking-button {
     padding:5px 10px;
+  }
+
+  .modal-buttons-div {
+    margin-top:40px;
+    width:100%;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:20px;
+  }
+  .modal-locking-div {
+    margin-top:40px;
+    width:100%;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:20px;
   }

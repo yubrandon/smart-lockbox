@@ -503,29 +503,52 @@ function confirmationModal(assignment) {
     const selectionButtons = document.createElement('div');
     selectionButtons.classList.add('modal-buttons-div')
     //Add buttons to confirm
-    const confirm = document.createElement('button');
-    confirm.classList.add('modal-confirm');
-    confirm.innerText = 'Yes';
-    confirm.addEventListener('click', (event) => {
+    const confirmButton = document.createElement('button');
+    confirmButton.classList.add('modal-assignment-confirm');
+    confirmButton.innerText = 'Confirm';
+    confirmButton.addEventListener('click', (event) => {
         event.preventDefault();
-        //Go to next screen if user confirms
+        promptLocking();
     }, { once: true });
-    selectionButtons.appendChild(confirm);
-    const reject = document.createElement('button');
-    reject.classList.add('modal-reject');
-    reject.innerText = 'No';
-    reject.addEventListener('click', (event) => {
+    selectionButtons.appendChild(confirmButton);
+    const rejectButton = document.createElement('button');
+    rejectButton.classList.add('modal-assignment-reject');
+    rejectButton.innerText = 'Cancel';
+    rejectButton.addEventListener('click', (event) => {
         event.preventDefault();
         //Close the modal if user rejects
         const dialog = document.querySelector('.modal');
         dialog.close();
     }, { once: true });
 
-    selectionButtons.appendChild(reject);
-
-
+    selectionButtons.appendChild(rejectButton);
 
     field.appendChild(selectionButtons);
+}
+//After confirmation, prompt user to place their device in the box
+function promptLocking() {
+    clearModal(); 
+
+    //Change header title
+    const modal_header = document.querySelector('.modal-header');
+    const header = document.createElement('h4');
+    header.innerText = "Place your device in the box and close the cover";
+    modal_header.appendChild(header);
+
+    const field = document.querySelector('.modal-field');
+    const buttonDiv = document.createElement('div');
+    buttonDiv.classList.add('modal-locking-div');
+
+    const confirmButton = document.createElement('button');
+    confirmButton.classList.add('modal-locking-button');
+    confirmButton.innerText = "Confirm";
+    confirmButton.addEventListener('click', (event) => {
+        event.preventDefault();
+        //Go to locked view
+    }, { once: true });
+
+    buttonDiv.appendChild(confirmButton);
+    field.appendChild(buttonDiv);
 }
 
 
