@@ -1,12 +1,16 @@
-# CMPE 195A Lockbox Project
+# CMPE 195 Lockbox Project
 
 Code is written in src/render.js
 
-to run:
-<br>
+### Testing
+To run:
+```
 npm install
-<br>
 npm run start
+```
 
-
-https://www.electronjs.org
+### Canvas Setup
+Use the following guide to set up Canvas and obtain your own API key and URL for testing
+```
+https://github.com/instructure/canvas-lms/wiki/Quick-Start
+```
