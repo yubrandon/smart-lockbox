@@ -16,8 +16,8 @@ const currentUser = userInfo();
 function updateConnectionIndicator() {
     clear(header);
     //Create div
-    const connectionDiv = document.createElement('div');
-    connectionDiv.classList.add('indicator-div');
+    const connection_div = document.createElement('div');
+    connection_div.classList.add('indicator-div');
     //Create canvas for shape
     const circle = document.createElement('canvas');
     circle.classList.add('indicator-circle');
@@ -52,9 +52,9 @@ function updateConnectionIndicator() {
     }
             
     //Append elements to div
-    connectionDiv.appendChild(circle);
-    connectionDiv.appendChild(text);
-    header.appendChild(connectionDiv);
+    connection_div.appendChild(circle);
+    connection_div.appendChild(text);
+    header.appendChild(connection_div);
 }
 
 //Displays the main login menu to connect to Canvas or set task
@@ -134,8 +134,8 @@ function addUser() {
     updateConnectionIndicator();
 
     //Create object
-    const nameDiv = document.createElement('div');
-    nameDiv.classList.add('header-name');
+    const name_div = document.createElement('div');
+    name_div.classList.add('header-name');
     const name = document.createElement('h3');
     name.classList.add('header-name');
     name.innerText = "Student: " + currentUser.getName();
@@ -149,10 +149,10 @@ function addUser() {
 
     })
 
-    nameDiv.appendChild(name);
-    nameDiv.appendChild(logout);
+    name_div.appendChild(name);
+    name_div.appendChild(logout);
 
-    header.appendChild(nameDiv);
+    header.appendChild(name_div);
 }
 
 
@@ -224,41 +224,47 @@ async function assignmentView(courseData) {
     //console.log(courseWork);
     //Iterate through array and create div for each course
     for(let i = 0; i<courseWork.length; i++) {
-        const courseDiv = document.createElement('div');
-        courseDiv.classList.add('course-div');
+        const course = courseWork[i][0];
+        const course_div = document.createElement('div');
+        course_div.classList.add('course-div');
 
         const courseHeader = document.createElement('div');
         courseHeader.classList.add('course-header-div');
         const courseText = document.createElement('h2');
         courseText.classList.add('course-header');
-        courseText.innerText = "Course:" + courseWork[i][0].name;
+        courseText.innerText = "Course:" + course.name;
         //Add interactable arrow next to course name
 
         courseHeader.appendChild(courseText);
-        courseDiv.appendChild(courseHeader);
+        course_div.appendChild(courseHeader);
 
-        const assignmentContainer = document.createElement('div');
-        assignmentContainer.classList.add('course-assignments');
+        const assignment_container = document.createElement('div');
+        assignment_container.classList.add('course-assignments');
 
         //Iterate through nested array to get assignments for course
         for(let j=1; j<courseWork[i].length; j++) {
-            let sub = await getSubmissions(courseWork[i][0].id, courseWork[i][j].id);
+            const assignment = courseWork[i][j];
+            let sub = await getSubmissions(course.id, assignment.id);
             //console.log(sub);
-            if(sub.attempt != courseWork[i][j].allowed_attempts || courseWork[i][j].allowed_attempts == -1) {
-                const assignmentDiv = document.createElement('div');
-                assignmentDiv.classList.add('assignment-div');
-                const assignmentHeader = document.createElement('h3');
-                assignmentHeader.classList.add('assignment-name');
-                const assignmentName = courseWork[i][j].name
-                assignmentHeader.innerText = assignmentName;
-                assignmentDiv.appendChild(assignmentHeader);
+            if(sub.attempt != assignment.allowed_attempts || assignment.allowed_attempts == -1) {
+                const assignment_div = document.createElement('div');
+                assignment_div.classList.add('assignment-div');
+                const assignment_header = document.createElement('h3');
+                assignment_header.classList.add('assignment-name');
+                const assignmentName = assignment.name
+                assignment_header.innerText = assignmentName;
+                assignment_div.appendChild(assignment_header);
     
                 //Add button that appears when div is active to choose a specific assignment
-                const assignmentButton = document.createElement('div');
-                assignmentButton.classList.add('assignment-button-div');
-                const selectButton = document.createElement('button');
+                const assignment_button_div = document.createElement('div');
+                assignment_button_div.classList.add('assignment-button-div');
+                const assignment_select = document.createElement('button');
                 const dialog = document.querySelector('.modal');
-                selectButton.addEventListener('click', (event) => {
+                assignment_select.addEventListener('click', (event) => {
+                    //console.log("course, assignment, name:", course.id, assignment.id, assignmentName)
+                    currentUser.setCourseId(course.id);
+                    currentUser.setAssignmentId(assignment.id);
+                    currentUser.setAssignmentName(assignmentName);
                     //console.log('assignment chosen');
                     if(boxConnection.isConnected()) {
                         //Display confirmation
@@ -271,21 +277,67 @@ async function assignmentView(courseData) {
                         alert('Box not connected!');
                     }
                 });
-                selectButton.classList.add('assignment-button');
-                const selectText = document.createElement('p');
-                selectText.innerText = 'Select';
-                selectText.classList.add('assignment-button-text');
+                assignment_select.classList.add('assignment-button');
+                const select_text = document.createElement('p');
+                select_text.innerText = 'Select';
+                select_text.classList.add('assignment-button-text');
 
-                selectButton.appendChild(selectText);
-                assignmentButton.appendChild(selectButton);
-                assignmentDiv.appendChild(assignmentButton);
-                assignmentContainer.appendChild(assignmentDiv);
+                assignment_select.appendChild(select_text);
+                assignment_button_div.appendChild(assignment_select);
+                assignment_div.appendChild(assignment_button_div);
+                assignment_container.appendChild(assignment_div);
             }
         }
         //Add to body
-        courseDiv.appendChild(assignmentContainer);
-        content.appendChild(courseDiv);
+        course_div.appendChild(assignment_container);
+        content.appendChild(course_div);
     }
+
+}
+//Screen while locking
+async function lockedView() {
+    //console.log("course, assignment, name:", currentUser.getCourseId(), currentUser.getAssignmentId(), currentUser.getAssignmentName());
+
+    clear(content);
+    //Track current number of submissions
+    const currentSubmissions = await getSubmissions(currentUser.getCourseId(), currentUser.getAssignmentId());
+    console.log(currentSubmissions);
+
+    //Display current assignment and add button
+    const lock_div = document.createElement('div');
+    lock_div.classList.add('lock-screen-div');
+
+    const lock_header = document.createElement('h4');
+    lock_header.classList.add('lock-screen-header');
+    lock_header.innerText = 'Current assignment:';
+
+    const assignment_name = document.createElement('h1');
+    assignment_name.classList.add('lock-screen-name');
+    assignment_name.innerText = `${currentUser.getAssignmentName()}`;
+
+    const completion_button = document.createElement('button');
+    completion_button.classList.add('lock-screen-button');
+    completion_button.innerText = 'Assignment Completed';
+    completion_button.addEventListener('click', async () => {
+        //Check completion
+        const submissionCount = await getSubmissions(currentUser.getCourseId(), currentUser.getAssignmentId());
+        console.log(submissionCount);
+        //If submission count hasn't changed, the current session has not been completed
+        if(submissionCount.attempt === currentSubmissions.attempt) {
+            console.log('incomplete');
+            alert('The assignment has not been completed!');
+        } 
+        else {
+            console.log('assignment complete');
+            //unlock box
+            assignmentView(await getCourses(key,url));
+        }
+    })
+
+    lock_div.appendChild(lock_header);
+    lock_div.appendChild(assignment_name);
+    lock_div.appendChild(completion_button);
+    content.appendChild(lock_div);
 
 }
 
@@ -342,7 +394,7 @@ function loginModal(){
     field.appendChild(submit_div);
 }
 
-function confirmationModal(assignment) {
+async function confirmationModal(assignment) {
     clearModal();
 
     //Change header title
@@ -401,7 +453,11 @@ function promptLocking() {
     confirmButton.innerText = "Confirm";
     confirmButton.addEventListener('click', (event) => {
         event.preventDefault();
-        //Go to locked view
+        console.log('Locking...');
+        //set delay according to time for solenoid to extend
+        const dialog = document.querySelector('.modal');
+        dialog.close();
+        lockedView();
     }, { once: true });
 
     buttonDiv.appendChild(confirmButton);
@@ -435,6 +491,9 @@ function userInfo() {
         name : "",
         key : "",
         url : "",
+        courseId: 0,
+        assignmentId: 0,
+        assignmentName: "",
     }
     const setName = (newName) => data.name = newName;
     const getName = () => data.name;
@@ -442,13 +501,22 @@ function userInfo() {
 
     const setKey = (newKey) => data.key = newKey;
     const getKey = () => data.key;
-    const clearKey = () => data.key = "";
 
     const setUrl = (newUrl) => data.url = newUrl;
     const getUrl = () => data.url;
-    const clearUrl = () => data.url = "";
 
-    return { setName, getName, clearName, setKey, getKey, clearKey, setUrl, getUrl, clearUrl };
+    const setCourseId = (newCourseId) => data.courseId = newCourseId;
+    const getCourseId = () => data.courseId;
+
+    const setAssignmentId = (newAssignmentId) => data.assignmentId = newAssignmentId;
+    const getAssignmentId = () => data.assignmentId;
+
+    const setAssignmentName = (newAssignmentName) => data.assignmentName = newAssignmentName;
+    const getAssignmentName = () => data.assignmentName;
+
+    return { setName, getName, clearName, setKey, getKey, setUrl, getUrl, 
+        setCourseId, getCourseId, setAssignmentId, getAssignmentId, setAssignmentName, getAssignmentName,
+     };
 }
 
 
