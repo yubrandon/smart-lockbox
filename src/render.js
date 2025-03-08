@@ -330,7 +330,8 @@ async function lockedView() {
         else {
             console.log('assignment complete');
             //unlock box
-            assignmentView(await getCourses(key,url));
+            //Return to assignment screen
+            assignmentView(await getCourses(currentUser.getKey(),currentUser.getUrl()));
         }
     })
 
