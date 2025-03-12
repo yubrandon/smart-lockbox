@@ -331,7 +331,13 @@ async function lockedView() {
             console.log('assignment complete');
             //unlock box
             //Return to assignment screen
-            assignmentView(await getCourses(currentUser.getKey(),currentUser.getUrl()));
+            if(boxConnection.isConnected()) {
+                assignmentView(await getCourses(currentUser.getKey(),currentUser.getUrl()));
+            }
+            else {
+                alert('Box disconnected! Returning to main menu.');
+                loginMenu();
+            }
         }
     })
 
@@ -417,6 +423,10 @@ async function confirmationModal(assignment) {
     confirmButton.classList.add('modal-assignment-confirm');
     confirmButton.innerText = 'Confirm';
     confirmButton.addEventListener('click', (event) => {
+        if(!boxConnection.isConnected()) {
+            alert('Box disconnected! Returning to main menu.');
+            loginMenu();
+        }
         event.preventDefault();
         promptLocking();
     }, { once: true });
@@ -454,7 +464,11 @@ function promptLocking() {
     confirmButton.innerText = "Confirm";
     confirmButton.addEventListener('click', (event) => {
         event.preventDefault();
-        console.log('Locking...');
+        //console.log('Locking...');
+        if(!boxConnection.isConnected()) {
+            alert('Box disconnected! Returning to main menu.');
+            loginMenu();
+        }
         //set delay according to time for solenoid to extend
         const dialog = document.querySelector('.modal');
         dialog.close();
