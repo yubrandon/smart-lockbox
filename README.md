@@ -1,6 +1,5 @@
 # CMPE 195 Lockbox Project
 
-Code is written in src/render.js
 
 ### Testing
 To run:
