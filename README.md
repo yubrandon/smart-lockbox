@@ -9,7 +9,6 @@ npm start
 Run chrome using the following line and open localhost in its window:
 ```
 google-chrome --disable-web-security --user-data-dir="/tmp/chrome_dev"
-
 ```
 ### Electron
 ```
