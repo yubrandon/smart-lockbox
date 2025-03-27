@@ -3,6 +3,7 @@ const content = document.querySelector('.content');
 const footer = document.querySelector('.footer');
 
 const { getCourses, getUser, getSubmissions, getCoursework } = require('./js/api.js');
+const { connectSerial, lockSerial, unlockSerial } = require('./js/serial.js');
 const boxConnection = connectionMonitor();
 const currentUser = userInfo();
 
@@ -329,7 +330,7 @@ async function lockedView() {
         } 
         else {
             console.log('assignment complete');
-            //unlock box
+            setTimeout(boxConnection.unlock, 5 * 1000);
             //Return to assignment screen
             if(boxConnection.isConnected()) {
                 assignmentView(await getCourses(currentUser.getKey(),currentUser.getUrl()));
@@ -422,10 +423,13 @@ async function confirmationModal(assignment) {
     const confirmButton = document.createElement('button');
     confirmButton.classList.add('modal-assignment-confirm');
     confirmButton.innerText = 'Confirm';
+    const dialog = document.querySelector('.modal');
     confirmButton.addEventListener('click', (event) => {
         if(!boxConnection.isConnected()) {
             alert('Box disconnected! Returning to main menu.');
+            dialog.close();
             loginMenu();
+            return;
         }
         event.preventDefault();
         promptLocking();
@@ -437,7 +441,6 @@ async function confirmationModal(assignment) {
     rejectButton.addEventListener('click', (event) => {
         event.preventDefault();
         //Close the modal if user rejects
-        const dialog = document.querySelector('.modal');
         dialog.close();
     }, { once: true });
 
@@ -464,13 +467,17 @@ function promptLocking() {
     confirmButton.innerText = "Confirm";
     confirmButton.addEventListener('click', (event) => {
         event.preventDefault();
+        const dialog = document.querySelector('.modal');
         //console.log('Locking...');
         if(!boxConnection.isConnected()) {
             alert('Box disconnected! Returning to main menu.');
+            dialog.close();
             loginMenu();
+            return;
         }
         //set delay according to time for solenoid to extend
-        const dialog = document.querySelector('.modal');
+        setTimeout(boxConnection.lock, 5 * 1000);
+        //boxConnection.lock();
         dialog.close();
         lockedView();
     }, { once: true });
@@ -487,16 +494,24 @@ function promptLocking() {
 //Connection management
 function connectionMonitor() {
     var connected = false;
+    var port;
     const connect = () => {
         connected = true;
+        port = connectSerial();
         refreshHeader();
     }
     const disconnect = () => {
         connected = false;
         refreshHeader();
     }
+    const lock = () => {
+        serialLock(port);
+    }
+    const unlock = () => {
+        serialUnlock(port);
+    }
     const isConnected = () => {return connected};
-    return { connect, disconnect, isConnected };
+    return { connect, disconnect, isConnected, lock, unlock };
 }
 
 
