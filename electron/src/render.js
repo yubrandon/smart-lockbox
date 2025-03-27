@@ -330,7 +330,7 @@ async function lockedView() {
         } 
         else {
             console.log('assignment complete');
-            //unlock box
+            setTimeout(boxConnection.unlock, 5 * 1000);
             //Return to assignment screen
             if(boxConnection.isConnected()) {
                 assignmentView(await getCourses(currentUser.getKey(),currentUser.getUrl()));
@@ -476,6 +476,8 @@ function promptLocking() {
             return;
         }
         //set delay according to time for solenoid to extend
+        setTimeout(boxConnection.lock, 5 * 1000);
+        //boxConnection.lock();
         dialog.close();
         lockedView();
     }, { once: true });
@@ -495,7 +497,7 @@ function connectionMonitor() {
     var port;
     const connect = () => {
         connected = true;
-        //port = connectSerial();
+        port = connectSerial();
         refreshHeader();
     }
     const disconnect = () => {
