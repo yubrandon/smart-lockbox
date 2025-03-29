@@ -10,9 +10,8 @@ const currentUser = userInfo();
 //  UI/MENU
 //
 
-
-    //Update badge based on connection status
-    function updateConnectionIndicator() {
+//Update badge based on connection status
+function updateConnectionIndicator() {
     const connection_badge = document.querySelector('.badge');
     //Change indicator based on state
     if(boxConnection.isConnected()) {
@@ -52,7 +51,7 @@ function loginMenu() {
 
     //Open modal on click
     canvas_btn.type = 'button';
-    canvas_btn.classList.add('btn','btn-lg', 'bg-secondary-subtle', 'border', 'border-dark');
+    canvas_btn.classList.add('btn','btn-lg', 'btn-outline-dark', 'border', 'border-dark');
     canvas_btn.setAttribute("data-bs-toggle","modal");
     canvas_btn.setAttribute("data-bs-target", "#modal");
 
@@ -71,7 +70,7 @@ function loginMenu() {
 loginMenu();
 
 (function bluetoothButton(){
-    const footer = document.querySelector('.footer-right');
+    const footer = document.querySelector('.footer');
     clear(footer);
     //Create button
     const bluetooth_btn = document.createElement('button');
@@ -105,25 +104,29 @@ function addUser() {
     updateConnectionIndicator();
 
     //Create object
-    const name_div = document.createElement('div');
-    name_div.classList.add('header-name');
-    const name = document.createElement('h3');
-    name.classList.add('header-name');
-    name.innerText = "Student: " + currentUser.getName();
+    const header_info = document.querySelector('.header-name');
+
+    const label = document.createElement('h5');
+    label.classList.add('m-0', 'text-center', 'me-2', 'text-light');
+    label.innerText = "Student: ";
+    
+    const name = document.createElement('h4');
+    name.classList.add('header-name', 'm-0', 'me-3', 'text-info');
+    name.innerText = currentUser.getName();
 
     const logout = document.createElement('button');
-    logout.classList.add('logout-button');
+    logout.classList.add('logout-button', 'btn', 'btn-outline-light', 'text-center');
     logout.innerText = 'Log out';
     logout.addEventListener('click', () => {
         currentUser.clearName();
+        clear(header_info);
         loginMenu();
 
     })
+    header_info.appendChild(label);
+    header_info.appendChild(name);
+    header_info.appendChild(logout);
 
-    name_div.appendChild(name);
-    name_div.appendChild(logout);
-
-    header.appendChild(name_div);
 }
 
 
@@ -140,6 +143,11 @@ function login() {
 
     //Handle form submission
     const form = document.querySelector('#submit');
+
+    //Toggle modal on click, alert will show if error
+    form.setAttribute("data-bs-toggle", "modal");
+    form.setAttribute("data-bs-target", "#modal");
+
     //Upon submission of form, check form values and login if valid
     form.addEventListener('click', async (event) => {
         event.preventDefault(); //Enable to stop refresh
@@ -151,7 +159,6 @@ function login() {
         if(url[url.length-1] == '/') url = url.slice(0,url.length-1);
         //console.log(`${url}/api/v1/courses`);
         
-        const dialog = document.querySelector('.modal');
         //Pass inputs to function, returns json
         const courseData = await getCourses(key,url);
         //console.log('course data: ', courseData);
@@ -168,12 +175,13 @@ function login() {
             const user = await getUser(currentUser.getUrl(), currentUser.getKey());
             currentUser.setName(user.name);
 
-            //console.log(user);
-            addUser();
-            //close the dialogue
-
             //Pass information to assignments screen
-            assignmentView(courseData);
+            await assignmentView(courseData);
+
+            //console.log(user);
+            addUser();            
+
+
         }
         //Event listener will clean itself up upon next screen being displayed
     }, { once: true });
@@ -218,6 +226,7 @@ async function assignmentView(courseData) {
                 const assignmentName = assignment.name
                 assignment_header.innerText = assignmentName;
                 assignment_div.appendChild(assignment_header);
+
     
                 //Add button that appears when div is active to choose a specific assignment
                 const assignment_button_div = document.createElement('div');
@@ -242,12 +251,13 @@ async function assignmentView(courseData) {
                     }
                 });
                 assignment_select.classList.add('assignment-button');
-                const select_text = document.createElement('p');
-                select_text.innerText = 'Select';
-                select_text.classList.add('assignment-button-text');
+                assignment_select.innerText = 'Select';
 
-                assignment_select.appendChild(select_text);
                 assignment_button_div.appendChild(assignment_select);
+
+                const desc = document.createElement('p');
+                desc.innerHTML = assignment.description;
+                assignment_div.appendChild(desc);
                 assignment_div.appendChild(assignment_button_div);
                 assignment_container.appendChild(assignment_div);
             }

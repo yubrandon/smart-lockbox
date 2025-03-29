@@ -64,6 +64,7 @@ async function getAssignments(url, key, courseID) {
             throw new Error(`HTTP Error. Status: ${response.status}`);
         }
         const data = await response.json();
+        //console.log('assignment info:',data);
         return data;
     } catch (error) {
         console.error("Error fetching data: ", error);
@@ -84,7 +85,6 @@ async function getSubmissions(url, key, course_id, assignment_id) {
             throw new Error(`HTTP Error. Status: ${response.status}`);
         }
         const data = await response.json();
-        console.log(data);
         return data;
     } catch (error) {
         console.error("Error fetching data: ", error);
