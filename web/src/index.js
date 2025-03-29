@@ -31,14 +31,12 @@ function loginMenu() {
     updateConnectionIndicator();
     
     clear(content);
-    const dialog = document.querySelector('.modal');
 
     //Create div
     const canvas = document.createElement('div');
     canvas.classList.add('canvas-login');
     //Create button
     const canvas_btn = document.createElement('button');
-    canvas_btn.classList.add('canvas-login-button')
 
     //Create image
     const canvas_icon = document.createElement('img');
@@ -52,10 +50,17 @@ function loginMenu() {
     canvas_btn.appendChild(canvas_icon);
     canvas_btn.appendChild(canvas_text);
 
+    //Open modal on click
+    canvas_btn.type = 'button';
+    canvas_btn.classList.add('btn','btn-lg', 'bg-secondary-subtle', 'border', 'border-dark');
+    canvas_btn.setAttribute("data-bs-toggle","modal");
+    canvas_btn.setAttribute("data-bs-target", "#modal");
+
+
     //Call login when canvas button is clicked
-    canvas_btn.addEventListener('click', ()=> {
+    canvas_btn.addEventListener('click', (event)=> {
         login();
-        dialog.showModal();
+        
     });
 
     //Append button to div
@@ -68,32 +73,29 @@ loginMenu();
 (function bluetoothButton(){
     const footer = document.querySelector('.footer-right');
     clear(footer);
-    //Create div
-    const bluetooth_div = document.createElement('div');
-    bluetooth_div.classList.add('bluetooth-div');
     //Create button
     const bluetooth_btn = document.createElement('button');
-    bluetooth_btn.classList.add('bluetooth-button');
+    bluetooth_btn.classList.add('bluetooth-button', 'btn', 'btn-outline-primary', 'border', 'border-dark');
     bluetooth_btn.addEventListener('click', () => {
         if(boxConnection.isConnected()) boxConnection.disconnect();
         else boxConnection.connect();
     })
-
+    const content_div = document.createElement('div');
+    content_div.classList.add('p-2', 'd-flex', 'flex-row','align-items-center');
     //Create image
     const bluetooth_icon = document.createElement('img');
-    bluetooth_icon.classList.add('bluetooth-icon');
+    bluetooth_icon.classList.add('bluetooth-icon','pe-3');
     bluetooth_icon.src = "./static/bluetooth.png";
     //Create text
     const bluetooth_text = document.createElement('h3');
-    bluetooth_text.classList.add('bluetooth-text');
+    bluetooth_text.classList.add('bluetooth-text','m-0','text-center');
     bluetooth_text.innerText = "Link my Box";
     //Append elements to button
-    bluetooth_btn.appendChild(bluetooth_icon);
-    bluetooth_btn.appendChild(bluetooth_text);
+    content_div.appendChild(bluetooth_icon);
+    content_div.appendChild(bluetooth_text);
+    bluetooth_btn.appendChild(content_div);
     //Append button to div
-    bluetooth_div.appendChild(bluetooth_btn);
-    //Append div to footer
-    footer.appendChild(bluetooth_div);
+    footer.appendChild(bluetooth_btn);
 
 })();
 
@@ -137,9 +139,9 @@ function login() {
     loginModal();
 
     //Handle form submission
-    const form = document.querySelector('#modal-form');
+    const form = document.querySelector('#submit');
     //Upon submission of form, check form values and login if valid
-    form.addEventListener('submit', async (event) => {
+    form.addEventListener('click', async (event) => {
         event.preventDefault(); //Enable to stop refresh
         //Get values from input fields
         const key = document.querySelector('#key').value;
@@ -155,16 +157,11 @@ function login() {
         //console.log('course data: ', courseData);
         //Console.log(courseData);
 
-        var pressed = false;
         //Check for error
         if(courseData instanceof Error) {
-            //Clears fields
-            form.reset();
-            
             alert('Login Error! Check your access code or URL.');
         }
         else {
-            pressed = true;
             //Store data and get Canvas information for student
             currentUser.setKey(key);
             currentUser.setUrl(url);
@@ -173,13 +170,10 @@ function login() {
 
             //console.log(user);
             addUser();
-
-            form.reset();
-            dialog.close();
+            //close the dialogue
 
             //Pass information to assignments screen
             assignmentView(courseData);
-            pressed = false;
         }
         //Event listener will clean itself up upon next screen being displayed
     }, { once: true });
@@ -276,42 +270,56 @@ function loginModal(){
     const modal_title = document.querySelector('.modal-title');
     modal_title.innerText = "Enter Details Below";
 
-    const field = document.querySelector('.modal-field');
+    const form = document.querySelector('.modal-form');
 
     //Create field for api token input
     const key_div = document.createElement('div');
-    key_div.classList.add('form');
+    key_div.classList.add('mb-3');
+
+    const key_label = document.createElement('label');
+    key_label.classList.add('form-label');
+    key_label.for = "key";
+    key_label.innerText = "Access Token";
+    key_div.appendChild(key_label);
+
     const key_form = document.createElement('input');
     key_form.type = "text";
     key_form.id = "key";
-    key_form.name = "key"; 
     key_form.placeholder = "Access Token";
+    key_form.classList.add('form-control');
     key_div.appendChild(key_form);
-    field.appendChild(key_div);
+
+    form.appendChild(key_div);
 
     //Create field for url input
     const url_div = document.createElement('div');
-    url_div.classList.add('form');
+    url_div.classList.add('mb-4');
+
+    const url_label = document.createElement('label');
+    url_label.classList.add('form-label');
+    url_label.innerText = "Canvas URL";
+    url_label.for = "url";
+    url_div.appendChild(url_label);
+
     const url_form = document.createElement('input');
     url_form.type = "text";
     url_form.id = "url";
-    url_form.name = "url";
-    url_form.placeholder = "Dashboard URL";
+    url_form.classList.add('form-control');
+    url_form.placeholder = "Canvas URL";
     url_div.appendChild(url_form);
-    field.appendChild(url_div);
+
+    form.appendChild(url_div);
 
     //Create button for form submission
     const submit_div = document.createElement('div');
-    submit_div.classList.add('submit-div')
-
+    submit_div.classList.add('d-flex','flex-row-reverse');
     const submit_btn = document.createElement('button');
     submit_btn.id = "submit";
-    submit_btn.name = "submit";
-    submit_btn.classList.add('submit-btn');
+    submit_btn.classList.add('btn','btn-primary');
     submit_btn.innerText = "Submit";
     submit_div.appendChild(submit_btn);
+    form.appendChild(submit_div);
 
-    field.appendChild(submit_div);
 }
 
 async function confirmationModal(assignment) {
@@ -559,8 +567,7 @@ function clear(parent) {
 
 //Clears modal contents
 function clearModal(){ 
-    clear(document.querySelector('.modal-header'));
-    clear(document.querySelector('.modal-field'));
+    clear(document.querySelector('.modal-form'));
 }
 
 //Update changes in header
