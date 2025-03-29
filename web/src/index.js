@@ -51,7 +51,7 @@ function loginMenu() {
 
     //Open modal on click
     canvas_btn.type = 'button';
-    canvas_btn.classList.add('btn','btn-lg', 'btn-outline-dark', 'border', 'border-dark');
+    canvas_btn.classList.add('btn','btn-lg', 'btn-outline-dark', 'border', 'border-dark', 'p-5');
     canvas_btn.setAttribute("data-bs-toggle","modal");
     canvas_btn.setAttribute("data-bs-target", "#modal");
 
@@ -197,74 +197,85 @@ async function assignmentView(courseData) {
     //Iterate through array and create div for each course
     for(let i = 0; i<courseWork.length; i++) {
         const course = courseWork[i][0];
-        const course_div = document.createElement('div');
-        course_div.classList.add('course-div');
+        //Create div with header
+        const accordion_div = document.createElement('div');
+        accordion_div.classList.add('accordion-div', 'me-1', 'pb-3');
+        const header = document.createElement('h2');
+        header.innerText = "Course:" + course.name;
+        header.classList.add('m-0', 'border-bottom', 'border-dark');
+        accordion_div.appendChild(header);
 
-        const courseHeader = document.createElement('div');
-        courseHeader.classList.add('course-header-div');
-        const courseText = document.createElement('h2');
-        courseText.classList.add('course-header');
-        courseText.innerText = "Course:" + course.name;
-        //Add interactable arrow next to course name
-
-        courseHeader.appendChild(courseText);
-        course_div.appendChild(courseHeader);
-
-        const assignment_container = document.createElement('div');
-        assignment_container.classList.add('course-assignments');
-
+        //Create accordion for each course
+        const accordion = document.createElement('div');
+        accordion.classList.add('accordion', 'accordion-flush');
+        accordion.id = "accordion";
         //Iterate through nested array to get assignments for course
         for(let j=1; j<courseWork[i].length; j++) {
             const assignment = courseWork[i][j];
             let sub = await getSubmissions(currentUser.getUrl(), currentUser.getKey(), course.id, assignment.id);
             //console.log(sub);
+            //Check if attempts can be made
             if(sub.attempt != assignment.allowed_attempts || assignment.allowed_attempts == -1) {
-                const assignment_div = document.createElement('div');
-                assignment_div.classList.add('assignment-div');
-                const assignment_header = document.createElement('h3');
-                assignment_header.classList.add('assignment-name');
-                const assignmentName = assignment.name
-                assignment_header.innerText = assignmentName;
-                assignment_div.appendChild(assignment_header);
+                //Create an accordion item
+                const item = document.createElement('div');
+                item.classList.add('accordion-item');
 
-    
-                //Add button that appears when div is active to choose a specific assignment
-                const assignment_button_div = document.createElement('div');
-                assignment_button_div.classList.add('assignment-button-div');
-                const assignment_select = document.createElement('button');
-                const dialog = document.querySelector('.modal');
-                assignment_select.addEventListener('click', (event) => {
+                //Create header for the item
+                const item_header = document.createElement('h2');
+                item_header.classList.add('accordion-header');
+                const item_btn = document.createElement('button');
+                item_btn.classList.add('accordion-button', 'collapsed');
+                item_btn.setAttribute("aria-expanded", "false");
+                item_btn.innerText = assignment.name;
+                item_btn.type = "button";
+                item_btn.setAttribute("data-bs-toggle","collapse");
+                item_btn.setAttribute("data-bs-target",`#collapse${i}${j}`);
+                item_header.appendChild(item_btn);
+                item.appendChild(item_header);
+
+                //Create the description
+                const desc = document.createElement('div');
+                desc.id = `collapse${i}${j}`;
+                desc.classList.add('accordion-collapse', 'collapse');
+                desc.setAttribute("data-bs-parent", "#accordion");
+
+                const body = document.createElement('div');
+                body.classList.add('accordion-body');
+                body.innerHTML = assignment.description;
+                
+                const select_div = document.createElement('div');
+                select_div.classList.add('d-flex','flex-row-reverse');
+                const select_btn = document.createElement('button');
+                select_btn.addEventListener('click', (event) => {
                     //console.log("course, assignment, name:", course.id, assignment.id, assignmentName)
                     currentUser.setCourseId(course.id);
                     currentUser.setAssignmentId(assignment.id);
-                    currentUser.setAssignmentName(assignmentName);
+                    currentUser.setAssignmentName(assignment.name);
                     //console.log('assignment chosen');
                     if(boxConnection.isConnected()) {
                         //Display confirmation
                         event.preventDefault();
-                        confirmationModal(assignmentName);
-                        dialog.showModal();
+                        confirmationModal(assignment.name);
                     }
                     else {
                         //Indicate error
                         alert('Box not connected!');
                     }
                 });
-                assignment_select.classList.add('assignment-button');
-                assignment_select.innerText = 'Select';
+                select_btn.classList.add('btn', 'btn-outline-success');
+                select_btn.innerText = 'Select';
+                select_div.appendChild(select_btn);
 
-                assignment_button_div.appendChild(assignment_select);
-
-                const desc = document.createElement('p');
-                desc.innerHTML = assignment.description;
-                assignment_div.appendChild(desc);
-                assignment_div.appendChild(assignment_button_div);
-                assignment_container.appendChild(assignment_div);
+                //Add button to body and then add to item
+                body.appendChild(select_btn);
+                desc.appendChild(body);
+                item.appendChild(desc);
+                accordion.appendChild(item);
             }
         }
         //Add to body
-        course_div.appendChild(assignment_container);
-        content.appendChild(course_div);
+        accordion_div.appendChild(accordion);
+        content.appendChild(accordion_div);
     }
 
 }
