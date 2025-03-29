@@ -1,6 +1,5 @@
 const header = document.querySelector('.header');
 const content = document.querySelector('.content');
-const footer = document.querySelector('.footer');
 
 import { getCourses, getUser, getSubmissions, getCoursework } from './js/api.js';
 const boxConnection = connectionMonitor();
@@ -12,49 +11,18 @@ const currentUser = userInfo();
 //
 
 
-//Used to update the status indicator in the header
-function updateConnectionIndicator() {
-    clear(header);
-    //Create div
-    const connection_div = document.createElement('div');
-    connection_div.classList.add('indicator-div');
-    //Create canvas for shape
-    const circle = document.createElement('canvas');
-    circle.classList.add('indicator-circle');
-    //Dimensions
-    const X = 60;
-    const Y = 40;
-    circle.width = X;
-    circle.height = Y;
-
-    //Create circle
-    const ctx = circle.getContext("2d");
-    ctx.scale(X / Y, 1);
-    ctx.beginPath();
-    ctx.arc(X/4, Y/2, 5, 0, 2 * Math.PI);
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = "black";
-    ctx.stroke();
-    
-    //Create text
-    const text = document.createElement('h3');
-    text.classList.add('connection-text');
+    //Update badge based on connection status
+    function updateConnectionIndicator() {
+    const connection_badge = document.querySelector('.badge');
     //Change indicator based on state
     if(boxConnection.isConnected()) {
-        ctx.fillStyle = "#40FF00";
-        ctx.fill();
-        text.innerText += 'Connected';
+        connection_badge.classList.add('bg-success');
+        connection_badge.innerText += 'Connected';
     } 
     else {
-        ctx.fillStyle = "#D9D9D9";
-        ctx.fill();
-        text.innerText = 'Disconnected';
+        connection_badge.classList.add('bg-danger');
+        connection_badge.innerText = 'Disconnected';
     }
-            
-    //Append elements to div
-    connection_div.appendChild(circle);
-    connection_div.appendChild(text);
-    header.appendChild(connection_div);
 }
 
 //Displays the main login menu to connect to Canvas or set task
@@ -98,6 +66,7 @@ function loginMenu() {
 loginMenu();
 
 (function bluetoothButton(){
+    const footer = document.querySelector('.footer-right');
     clear(footer);
     //Create div
     const bluetooth_div = document.createElement('div');
@@ -304,13 +273,8 @@ function loginModal(){
     clearModal();
 
     //Create title for modal
-    const modal_header = document.querySelector('.modal-header');
-    const title_div = document.createElement('div');
-    const title = document.createElement('h4');
-    title.innerText = "Enter Details Below";
-    title.classList.add('modal-title');
-    title_div.appendChild(title);
-    modal_header.appendChild(title_div);
+    const modal_title = document.querySelector('.modal-title');
+    modal_title.innerText = "Enter Details Below";
 
     const field = document.querySelector('.modal-field');
 
@@ -354,10 +318,8 @@ async function confirmationModal(assignment) {
     clearModal();
 
     //Change header title
-    const modal_header = document.querySelector('.modal-header');
-    const header = document.createElement('h4');
-    header.innerText = "Assignment Confirmation";
-    modal_header.appendChild(header);
+    const modal_title = document.querySelector('.modal-title');
+    modal_title.innerText = "Assignment Confirmation";
     
     //Add assignment selected
     const assignmentName = document.createElement('h2');
@@ -401,10 +363,8 @@ function promptLocking() {
     clearModal(); 
 
     //Change header title
-    const modal_header = document.querySelector('.modal-header');
-    const header = document.createElement('h4');
-    header.innerText = "Place your device in the box and close the cover";
-    modal_header.appendChild(header);
+    const modal_title = document.querySelector('.modal-title');
+    modal_title.innerText = "Place your device in the box and close the cover";
 
     const field = document.querySelector('.modal-field');
     const buttonDiv = document.createElement('div');
@@ -496,11 +456,15 @@ function connectionMonitor() {
     var connected = false;
     var port;
     const connect = async () => {
-        connected = true;
         port = await navigator.serial.requestPort();
-        const ports = await navigator.serial.getPorts();
+        //const ports = await navigator.serial.getPorts();
         console.log(port);
-        console.log(ports);
+        console.log('readable: ',port.readable);
+        connected = true;
+        if(port.readable.locked) {
+            console.log('okay');
+        }
+        //console.log(ports);
         if(port.readable || port.writable) {
             await port.close();
         }
@@ -601,7 +565,6 @@ function clearModal(){
 
 //Update changes in header
 function refreshHeader() {
-    clear(header);
     updateConnectionIndicator();
     if(currentUser.getName() != "") addUser();
 }
