@@ -16,7 +16,7 @@ function updateConnectionIndicator() {
     //Change indicator based on state
     if(boxConnection.isConnected()) {
         connection_badge.classList.add('bg-success');
-        connection_badge.innerText += 'Connected';
+        connection_badge.innerText = 'Connected';
     } 
     else {
         connection_badge.classList.add('bg-danger');
@@ -484,22 +484,29 @@ async function lockedView() {
 function connectionMonitor() {
     var connected = false;
     var port;
+    var fail = false;
     const connect = async () => {
         port = await navigator.serial.requestPort();
-        //const ports = await navigator.serial.getPorts();
+        const ports = await navigator.serial.getPorts();
         console.log(port);
         console.log('readable: ',port.readable);
-        connected = true;
-        if(port.readable.locked) {
-            console.log('okay');
-        }
         //console.log(ports);
         if(port.readable || port.writable) {
             await port.close();
         }
-        await port.open({baudRate: 115200});
-        unlock();
-        refreshHeader();
+        await port.open({baudRate: 115200})
+        .catch((err) => {
+            console.log('connection failed');
+            fail = true;
+        })
+        .then(() => {
+            if(!fail) {
+                console.log('connection successful');
+                connected = true;
+                unlock();
+                refreshHeader();
+            }
+        });        
     }
     const disconnect = () => {
         connected = false;
@@ -507,18 +514,22 @@ function connectionMonitor() {
         refreshHeader();
     }
     const lock = async () => {
-        console.log(port);
-        const encoder = new TextEncoder();
-        const writer = port.writable.getWriter();
-        await writer.write(encoder.encode('1'));
-        writer.releaseLock();
+        //console.log(port);
+        if(connected) {
+            const encoder = new TextEncoder();
+            const writer = port.writable.getWriter();
+            await writer.write(encoder.encode('1'));
+            writer.releaseLock();
+        }
     }
     const unlock = async () => {
-        console.log(port);
-        const encoder = new TextEncoder();
-        const writer = port.writable.getWriter();
-        await writer.write(encoder.encode('0'));
-        writer.releaseLock();
+        //console.log(port);
+        if(connected) {
+            const encoder = new TextEncoder();
+            const writer = port.writable.getWriter();
+            await writer.write(encoder.encode('0'));
+            writer.releaseLock();
+        }
     }
     const isConnected = () => {return connected};
     return { connect, disconnect, isConnected, lock, unlock };
