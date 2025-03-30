@@ -15,10 +15,14 @@ function updateConnectionIndicator() {
     const connection_badge = document.querySelector('.badge');
     //Change indicator based on state
     if(boxConnection.isConnected()) {
+        if(connection_badge.classList.contains('bg-danger')) 
+            connection_badge.classList.remove('bg-danger');
         connection_badge.classList.add('bg-success');
         connection_badge.innerText = 'Connected';
     } 
     else {
+        if(connection_badge.classList.contains('bg-success')) 
+            connection_badge.classList.remove('bg-success');
         connection_badge.classList.add('bg-danger');
         connection_badge.innerText = 'Disconnected';
     }
@@ -100,9 +104,6 @@ loginMenu();
 
 //Display name of logged in user at top
 function addUser() {
-    //Refresh indicator
-    updateConnectionIndicator();
-
     //Create object
     const header_info = document.querySelector('.header-name');
 
@@ -246,24 +247,21 @@ async function assignmentView(courseData) {
                 const select_div = document.createElement('div');
                 select_div.classList.add('d-flex','flex-row-reverse');
                 const select_btn = document.createElement('button');
+                select_btn.type = "button";
+                select_btn.setAttribute("data-bs-toggle", "modal");
+                select_btn.setAttribute("data-bs-target", "#modal");
+                select_btn.classList.add('btn', 'btn-outline-success');
+                select_btn.innerText = 'Select';
                 select_btn.addEventListener('click', (event) => {
                     //console.log("course, assignment, name:", course.id, assignment.id, assignmentName)
                     currentUser.setCourseId(course.id);
                     currentUser.setAssignmentId(assignment.id);
                     currentUser.setAssignmentName(assignment.name);
                     //console.log('assignment chosen');
-                    if(boxConnection.isConnected()) {
-                        //Display confirmation
-                        event.preventDefault();
-                        confirmationModal(assignment.name);
-                    }
-                    else {
-                        //Indicate error
-                        alert('Box not connected!');
-                    }
+                    //Display confirmation
+                    confirmationModal(assignment.name);
                 });
-                select_btn.classList.add('btn', 'btn-outline-success');
-                select_btn.innerText = 'Select';
+                
                 select_div.appendChild(select_btn);
 
                 //Add button to body and then add to item
@@ -350,42 +348,44 @@ async function confirmationModal(assignment) {
     const modal_title = document.querySelector('.modal-title');
     modal_title.innerText = "Assignment Confirmation";
     
+    //Main modal content body
+    const field = document.querySelector('.modal-form');
+
     //Add assignment selected
     const assignmentName = document.createElement('h2');
+    assignmentName.classList.add('m-0','mb-5')
     assignmentName.innerText = `${assignment}`;
-    modal_header.appendChild(assignmentName);
+    field.appendChild(assignmentName);
 
-    const field = document.querySelector('.modal-field');
-    const selectionButtons = document.createElement('div');
-    selectionButtons.classList.add('modal-buttons-div')
-    //Add buttons to confirm
-    const confirmButton = document.createElement('button');
-    confirmButton.classList.add('modal-assignment-confirm');
-    confirmButton.innerText = 'Confirm';
-    const dialog = document.querySelector('.modal');
-    confirmButton.addEventListener('click', (event) => {
+    //Create buttons
+    const btn_div = document.createElement('div');
+    btn_div.classList.add('d-flex', 'flex-row-reverse');
+
+    const cancel = document.createElement('button');
+    cancel.type = "button";
+    cancel.classList.add('btn', 'btn-secondary');
+    cancel.setAttribute("data-dismiss", "modal");
+    cancel.innerText = "Close";
+
+    const confirm = document.createElement('button');
+    confirm.type = "button";
+    confirm.classList.add('btn', 'btn-primary', 'ms-2');
+    confirm.innerText = "Confirm";
+    confirm.addEventListener('click', (event) => {
         if(!boxConnection.isConnected()) {
-            alert('Box disconnected! Returning to main menu.');
-            dialog.close();
-            loginMenu();
-            return;
+            alert('Box disconnected!');
         }
-        event.preventDefault();
-        promptLocking();
-    }, { once: true });
-    selectionButtons.appendChild(confirmButton);
-    const rejectButton = document.createElement('button');
-    rejectButton.classList.add('modal-assignment-reject');
-    rejectButton.innerText = 'Cancel';
-    rejectButton.addEventListener('click', (event) => {
-        event.preventDefault();
-        //Close the modal if user rejects
-        dialog.close();
+        else {
+            event.preventDefault();
+            promptLocking();
+        }
+        
     }, { once: true });
 
-    selectionButtons.appendChild(rejectButton);
+    btn_div.appendChild(confirm);
+    btn_div.appendChild(cancel);
 
-    field.appendChild(selectionButtons);
+    field.appendChild(btn_div);
 }
 //After confirmation, prompt user to place their device in the box
 function promptLocking() {
@@ -486,6 +486,7 @@ function connectionMonitor() {
     var port;
     var fail = false;
     const connect = async () => {
+        //Prompt user for port connection
         port = await navigator.serial.requestPort();
         const ports = await navigator.serial.getPorts();
         console.log(port);
@@ -494,6 +495,7 @@ function connectionMonitor() {
         if(port.readable || port.writable) {
             await port.close();
         }
+        //Open connection with port, if error, do not toggle connection
         await port.open({baudRate: 115200})
         .catch((err) => {
             console.log('connection failed');
@@ -504,17 +506,18 @@ function connectionMonitor() {
                 console.log('connection successful');
                 connected = true;
                 unlock();
-                refreshHeader();
+                updateConnectionIndicator();
             }
         });        
     }
     const disconnect = () => {
         connected = false;
         unlock();
-        refreshHeader();
+        updateConnectionIndicator();
     }
     const lock = async () => {
         //console.log(port);
+        //Write '1' to the device
         if(connected) {
             const encoder = new TextEncoder();
             const writer = port.writable.getWriter();
@@ -524,6 +527,7 @@ function connectionMonitor() {
     }
     const unlock = async () => {
         //console.log(port);
+        //Write '0' to the device
         if(connected) {
             const encoder = new TextEncoder();
             const writer = port.writable.getWriter();
@@ -601,11 +605,4 @@ function clear(parent) {
 function clearModal(){ 
     clear(document.querySelector('.modal-form'));
 }
-
-//Update changes in header
-function refreshHeader() {
-    updateConnectionIndicator();
-    if(currentUser.getName() != "") addUser();
-}
-
 
