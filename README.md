@@ -4,7 +4,7 @@
 ## Testing
 ### Web
 ```
-npm start
+npm run watch
 ```
 Run chrome using the following line and open localhost in its window:
 ```
