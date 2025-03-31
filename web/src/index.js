@@ -1,6 +1,5 @@
 const header = document.querySelector('.header');
 const content = document.querySelector('.content');
-const footer = document.querySelector('.footer');
 
 import { getCourses, getUser, getSubmissions, getCoursework } from './js/api.js';
 const boxConnection = connectionMonitor();
@@ -11,50 +10,22 @@ const currentUser = userInfo();
 //  UI/MENU
 //
 
-
-//Used to update the status indicator in the header
+//Update badge based on connection status
 function updateConnectionIndicator() {
-    clear(header);
-    //Create div
-    const connection_div = document.createElement('div');
-    connection_div.classList.add('indicator-div');
-    //Create canvas for shape
-    const circle = document.createElement('canvas');
-    circle.classList.add('indicator-circle');
-    //Dimensions
-    const X = 60;
-    const Y = 40;
-    circle.width = X;
-    circle.height = Y;
-
-    //Create circle
-    const ctx = circle.getContext("2d");
-    ctx.scale(X / Y, 1);
-    ctx.beginPath();
-    ctx.arc(X/4, Y/2, 5, 0, 2 * Math.PI);
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = "black";
-    ctx.stroke();
-    
-    //Create text
-    const text = document.createElement('h3');
-    text.classList.add('connection-text');
+    const connection_badge = document.querySelector('.badge');
     //Change indicator based on state
     if(boxConnection.isConnected()) {
-        ctx.fillStyle = "#40FF00";
-        ctx.fill();
-        text.innerText += 'Connected';
+        if(connection_badge.classList.contains('bg-danger')) 
+            connection_badge.classList.remove('bg-danger');
+        connection_badge.classList.add('bg-success');
+        connection_badge.innerText = 'Connected';
     } 
     else {
-        ctx.fillStyle = "#D9D9D9";
-        ctx.fill();
-        text.innerText = 'Disconnected';
+        if(connection_badge.classList.contains('bg-success')) 
+            connection_badge.classList.remove('bg-success');
+        connection_badge.classList.add('bg-danger');
+        connection_badge.innerText = 'Disconnected';
     }
-            
-    //Append elements to div
-    connection_div.appendChild(circle);
-    connection_div.appendChild(text);
-    header.appendChild(connection_div);
 }
 
 //Displays the main login menu to connect to Canvas or set task
@@ -63,14 +34,12 @@ function loginMenu() {
     updateConnectionIndicator();
     
     clear(content);
-    const dialog = document.querySelector('.modal');
 
     //Create div
     const canvas = document.createElement('div');
     canvas.classList.add('canvas-login');
     //Create button
     const canvas_btn = document.createElement('button');
-    canvas_btn.classList.add('canvas-login-button')
 
     //Create image
     const canvas_icon = document.createElement('img');
@@ -84,10 +53,17 @@ function loginMenu() {
     canvas_btn.appendChild(canvas_icon);
     canvas_btn.appendChild(canvas_text);
 
+    //Open modal on click
+    canvas_btn.type = 'button';
+    canvas_btn.classList.add('btn','btn-lg', 'btn-outline-dark', 'border', 'border-dark', 'p-5');
+    canvas_btn.setAttribute("data-bs-toggle","modal");
+    canvas_btn.setAttribute("data-bs-target", "#modal");
+
+
     //Call login when canvas button is clicked
-    canvas_btn.addEventListener('click', ()=> {
+    canvas_btn.addEventListener('click', (event)=> {
         login();
-        dialog.showModal();
+        
     });
 
     //Append button to div
@@ -98,61 +74,60 @@ function loginMenu() {
 loginMenu();
 
 (function bluetoothButton(){
+    const footer = document.querySelector('.footer');
     clear(footer);
-    //Create div
-    const bluetooth_div = document.createElement('div');
-    bluetooth_div.classList.add('bluetooth-div');
     //Create button
     const bluetooth_btn = document.createElement('button');
-    bluetooth_btn.classList.add('bluetooth-button');
+    bluetooth_btn.classList.add('bluetooth-button', 'btn', 'btn-outline-primary', 'border', 'border-dark');
     bluetooth_btn.addEventListener('click', () => {
         if(boxConnection.isConnected()) boxConnection.disconnect();
         else boxConnection.connect();
     })
-
+    const content_div = document.createElement('div');
+    content_div.classList.add('p-2', 'd-flex', 'flex-row','align-items-center');
     //Create image
     const bluetooth_icon = document.createElement('img');
-    bluetooth_icon.classList.add('bluetooth-icon');
+    bluetooth_icon.classList.add('bluetooth-icon','pe-3');
     bluetooth_icon.src = "./static/bluetooth.png";
     //Create text
     const bluetooth_text = document.createElement('h3');
-    bluetooth_text.classList.add('bluetooth-text');
+    bluetooth_text.classList.add('bluetooth-text','m-0','text-center');
     bluetooth_text.innerText = "Link my Box";
     //Append elements to button
-    bluetooth_btn.appendChild(bluetooth_icon);
-    bluetooth_btn.appendChild(bluetooth_text);
+    content_div.appendChild(bluetooth_icon);
+    content_div.appendChild(bluetooth_text);
+    bluetooth_btn.appendChild(content_div);
     //Append button to div
-    bluetooth_div.appendChild(bluetooth_btn);
-    //Append div to footer
-    footer.appendChild(bluetooth_div);
+    footer.appendChild(bluetooth_btn);
 
 })();
 
 //Display name of logged in user at top
 function addUser() {
-    //Refresh indicator
-    updateConnectionIndicator();
-
     //Create object
-    const name_div = document.createElement('div');
-    name_div.classList.add('header-name');
-    const name = document.createElement('h3');
-    name.classList.add('header-name');
-    name.innerText = "Student: " + currentUser.getName();
+    const header_info = document.querySelector('.header-name');
+
+    const label = document.createElement('h5');
+    label.classList.add('m-0', 'text-center', 'me-2', 'text-light');
+    label.innerText = "Student: ";
+    
+    const name = document.createElement('h4');
+    name.classList.add('header-name', 'm-0', 'me-3', 'text-info');
+    name.innerText = currentUser.getName();
 
     const logout = document.createElement('button');
-    logout.classList.add('logout-button');
+    logout.classList.add('logout-button', 'btn', 'btn-outline-light', 'text-center');
     logout.innerText = 'Log out';
     logout.addEventListener('click', () => {
         currentUser.clearName();
+        clear(header_info);
         loginMenu();
 
     })
+    header_info.appendChild(label);
+    header_info.appendChild(name);
+    header_info.appendChild(logout);
 
-    name_div.appendChild(name);
-    name_div.appendChild(logout);
-
-    header.appendChild(name_div);
 }
 
 
@@ -168,9 +143,14 @@ function login() {
     loginModal();
 
     //Handle form submission
-    const form = document.querySelector('#modal-form');
+    const form = document.querySelector('#submit');
+
+    //Toggle modal on click, alert will show if error
+    form.setAttribute("data-bs-toggle", "modal");
+    form.setAttribute("data-bs-target", "#modal");
+
     //Upon submission of form, check form values and login if valid
-    form.addEventListener('submit', async (event) => {
+    form.addEventListener('click', async (event) => {
         event.preventDefault(); //Enable to stop refresh
         //Get values from input fields
         const key = document.querySelector('#key').value;
@@ -180,37 +160,29 @@ function login() {
         if(url[url.length-1] == '/') url = url.slice(0,url.length-1);
         //console.log(`${url}/api/v1/courses`);
         
-        const dialog = document.querySelector('.modal');
         //Pass inputs to function, returns json
         const courseData = await getCourses(key,url);
         //console.log('course data: ', courseData);
         //Console.log(courseData);
 
-        var pressed = false;
         //Check for error
         if(courseData instanceof Error) {
-            //Clears fields
-            form.reset();
-            
             alert('Login Error! Check your access code or URL.');
         }
         else {
-            pressed = true;
             //Store data and get Canvas information for student
             currentUser.setKey(key);
             currentUser.setUrl(url);
             const user = await getUser(currentUser.getUrl(), currentUser.getKey());
             currentUser.setName(user.name);
 
-            //console.log(user);
-            addUser();
-
-            form.reset();
-            dialog.close();
-
             //Pass information to assignments screen
-            assignmentView(courseData);
-            pressed = false;
+            await assignmentView(courseData);
+
+            //console.log(user);
+            addUser();            
+
+
         }
         //Event listener will clean itself up upon next screen being displayed
     }, { once: true });
@@ -226,72 +198,82 @@ async function assignmentView(courseData) {
     //Iterate through array and create div for each course
     for(let i = 0; i<courseWork.length; i++) {
         const course = courseWork[i][0];
-        const course_div = document.createElement('div');
-        course_div.classList.add('course-div');
+        //Create div with header
+        const accordion_div = document.createElement('div');
+        accordion_div.classList.add('accordion-div', 'me-1', 'pb-3');
+        const header = document.createElement('h2');
+        header.innerText = "Course:" + course.name;
+        header.classList.add('m-0', 'border-bottom', 'border-dark');
+        accordion_div.appendChild(header);
 
-        const courseHeader = document.createElement('div');
-        courseHeader.classList.add('course-header-div');
-        const courseText = document.createElement('h2');
-        courseText.classList.add('course-header');
-        courseText.innerText = "Course:" + course.name;
-        //Add interactable arrow next to course name
-
-        courseHeader.appendChild(courseText);
-        course_div.appendChild(courseHeader);
-
-        const assignment_container = document.createElement('div');
-        assignment_container.classList.add('course-assignments');
-
+        //Create accordion for each course
+        const accordion = document.createElement('div');
+        accordion.classList.add('accordion', 'accordion-flush');
+        accordion.id = "accordion";
         //Iterate through nested array to get assignments for course
         for(let j=1; j<courseWork[i].length; j++) {
             const assignment = courseWork[i][j];
             let sub = await getSubmissions(currentUser.getUrl(), currentUser.getKey(), course.id, assignment.id);
             //console.log(sub);
+            //Check if attempts can be made
             if(sub.attempt != assignment.allowed_attempts || assignment.allowed_attempts == -1) {
-                const assignment_div = document.createElement('div');
-                assignment_div.classList.add('assignment-div');
-                const assignment_header = document.createElement('h3');
-                assignment_header.classList.add('assignment-name');
-                const assignmentName = assignment.name
-                assignment_header.innerText = assignmentName;
-                assignment_div.appendChild(assignment_header);
-    
-                //Add button that appears when div is active to choose a specific assignment
-                const assignment_button_div = document.createElement('div');
-                assignment_button_div.classList.add('assignment-button-div');
-                const assignment_select = document.createElement('button');
-                const dialog = document.querySelector('.modal');
-                assignment_select.addEventListener('click', (event) => {
+                //Create an accordion item
+                const item = document.createElement('div');
+                item.classList.add('accordion-item');
+
+                //Create header for the item
+                const item_header = document.createElement('h2');
+                item_header.classList.add('accordion-header');
+                const item_btn = document.createElement('button');
+                item_btn.classList.add('accordion-button', 'collapsed');
+                item_btn.setAttribute("aria-expanded", "false");
+                item_btn.innerText = assignment.name;
+                item_btn.type = "button";
+                item_btn.setAttribute("data-bs-toggle","collapse");
+                item_btn.setAttribute("data-bs-target",`#collapse${i}${j}`);
+                item_header.appendChild(item_btn);
+                item.appendChild(item_header);
+
+                //Create the description
+                const desc = document.createElement('div');
+                desc.id = `collapse${i}${j}`;
+                desc.classList.add('accordion-collapse', 'collapse');
+                desc.setAttribute("data-bs-parent", "#accordion");
+
+                const body = document.createElement('div');
+                body.classList.add('accordion-body');
+                body.innerHTML = assignment.description;
+                
+                const select_div = document.createElement('div');
+                select_div.classList.add('d-flex','flex-row-reverse');
+                const select_btn = document.createElement('button');
+                select_btn.type = "button";
+                select_btn.setAttribute("data-bs-toggle", "modal");
+                select_btn.setAttribute("data-bs-target", "#modal");
+                select_btn.classList.add('btn', 'btn-outline-success');
+                select_btn.innerText = 'Select';
+                select_btn.addEventListener('click', (event) => {
                     //console.log("course, assignment, name:", course.id, assignment.id, assignmentName)
                     currentUser.setCourseId(course.id);
                     currentUser.setAssignmentId(assignment.id);
-                    currentUser.setAssignmentName(assignmentName);
+                    currentUser.setAssignmentName(assignment.name);
                     //console.log('assignment chosen');
-                    if(boxConnection.isConnected()) {
-                        //Display confirmation
-                        event.preventDefault();
-                        confirmationModal(assignmentName);
-                        dialog.showModal();
-                    }
-                    else {
-                        //Indicate error
-                        alert('Box not connected!');
-                    }
+                    //Display confirmation
+                    confirmationModal(assignment.name);
                 });
-                assignment_select.classList.add('assignment-button');
-                const select_text = document.createElement('p');
-                select_text.innerText = 'Select';
-                select_text.classList.add('assignment-button-text');
+                
+                select_div.appendChild(select_btn);
 
-                assignment_select.appendChild(select_text);
-                assignment_button_div.appendChild(assignment_select);
-                assignment_div.appendChild(assignment_button_div);
-                assignment_container.appendChild(assignment_div);
+                //Add button to body and then add to item
+                body.appendChild(select_div);
+                desc.appendChild(body);
+                item.appendChild(desc);
+                accordion.appendChild(item);
             }
         }
         //Add to body
-        course_div.appendChild(assignment_container);
-        content.appendChild(course_div);
+        accordion_div.appendChild(accordion);
+        content.appendChild(accordion_div);
     }
 
 }
@@ -304,164 +286,173 @@ function loginModal(){
     clearModal();
 
     //Create title for modal
-    const modal_header = document.querySelector('.modal-header');
-    const title_div = document.createElement('div');
-    const title = document.createElement('h4');
-    title.innerText = "Enter Details Below";
-    title.classList.add('modal-title');
-    title_div.appendChild(title);
-    modal_header.appendChild(title_div);
+    const modal_title = document.querySelector('.modal-title');
+    modal_title.innerText = "Enter Details Below";
 
-    const field = document.querySelector('.modal-field');
+    const form = document.querySelector('.modal-form');
 
     //Create field for api token input
     const key_div = document.createElement('div');
-    key_div.classList.add('form');
+    key_div.classList.add('mb-3');
+
+    const key_label = document.createElement('label');
+    key_label.classList.add('form-label');
+    key_label.for = "key";
+    key_label.innerText = "Access Token";
+    key_div.appendChild(key_label);
+
     const key_form = document.createElement('input');
     key_form.type = "text";
     key_form.id = "key";
-    key_form.name = "key"; 
     key_form.placeholder = "Access Token";
+    key_form.classList.add('form-control');
     key_div.appendChild(key_form);
-    field.appendChild(key_div);
+
+    form.appendChild(key_div);
 
     //Create field for url input
     const url_div = document.createElement('div');
-    url_div.classList.add('form');
+    url_div.classList.add('mb-4');
+
+    const url_label = document.createElement('label');
+    url_label.classList.add('form-label');
+    url_label.innerText = "Canvas URL";
+    url_label.for = "url";
+    url_div.appendChild(url_label);
+
     const url_form = document.createElement('input');
     url_form.type = "text";
     url_form.id = "url";
-    url_form.name = "url";
-    url_form.placeholder = "Dashboard URL";
+    url_form.classList.add('form-control');
+    url_form.placeholder = "Canvas URL";
     url_div.appendChild(url_form);
-    field.appendChild(url_div);
+
+    form.appendChild(url_div);
 
     //Create button for form submission
     const submit_div = document.createElement('div');
-    submit_div.classList.add('submit-div')
-
+    submit_div.classList.add('d-flex','flex-row-reverse');
     const submit_btn = document.createElement('button');
     submit_btn.id = "submit";
-    submit_btn.name = "submit";
-    submit_btn.classList.add('submit-btn');
+    submit_btn.classList.add('btn','btn-primary');
     submit_btn.innerText = "Submit";
     submit_div.appendChild(submit_btn);
+    form.appendChild(submit_div);
 
-    field.appendChild(submit_div);
 }
 
 async function confirmationModal(assignment) {
     clearModal();
 
     //Change header title
-    const modal_header = document.querySelector('.modal-header');
-    const header = document.createElement('h4');
-    header.innerText = "Assignment Confirmation";
-    modal_header.appendChild(header);
+    const modal_title = document.querySelector('.modal-title');
+    modal_title.innerText = "Assignment Confirmation";
     
+    //Main modal content body
+    const field = document.querySelector('.modal-form');
+
     //Add assignment selected
     const assignmentName = document.createElement('h2');
+    assignmentName.classList.add('m-0','mb-5')
     assignmentName.innerText = `${assignment}`;
-    modal_header.appendChild(assignmentName);
+    field.appendChild(assignmentName);
 
-    const field = document.querySelector('.modal-field');
-    const selectionButtons = document.createElement('div');
-    selectionButtons.classList.add('modal-buttons-div')
-    //Add buttons to confirm
-    const confirmButton = document.createElement('button');
-    confirmButton.classList.add('modal-assignment-confirm');
-    confirmButton.innerText = 'Confirm';
-    const dialog = document.querySelector('.modal');
-    confirmButton.addEventListener('click', (event) => {
+    //Create buttons
+    const btn_div = document.createElement('div');
+    btn_div.classList.add('d-flex', 'flex-row-reverse');
+
+    const cancel = document.createElement('button');
+    cancel.type = "button";
+    cancel.classList.add('btn', 'btn-secondary');
+    cancel.setAttribute("data-bs-dismiss", "modal");
+    cancel.innerText = "Close";
+
+    const confirm = document.createElement('button');
+    confirm.type = "button";
+    confirm.classList.add('btn', 'btn-primary', 'ms-2');
+    confirm.innerText = "Confirm";
+    confirm.addEventListener('click', (event) => {
         if(!boxConnection.isConnected()) {
-            alert('Box disconnected! Returning to main menu.');
-            dialog.close();
-            loginMenu();
-            return;
+            alert('Box disconnected!');
         }
-        event.preventDefault();
-        promptLocking();
-    }, { once: true });
-    selectionButtons.appendChild(confirmButton);
-    const rejectButton = document.createElement('button');
-    rejectButton.classList.add('modal-assignment-reject');
-    rejectButton.innerText = 'Cancel';
-    rejectButton.addEventListener('click', (event) => {
-        event.preventDefault();
-        //Close the modal if user rejects
-        dialog.close();
+        else {
+            event.preventDefault();
+            promptLocking();
+        }
+        
     }, { once: true });
 
-    selectionButtons.appendChild(rejectButton);
+    btn_div.appendChild(confirm);
+    btn_div.appendChild(cancel);
 
-    field.appendChild(selectionButtons);
+    field.appendChild(btn_div);
 }
 //After confirmation, prompt user to place their device in the box
 function promptLocking() {
     clearModal(); 
 
     //Change header title
-    const modal_header = document.querySelector('.modal-header');
-    const header = document.createElement('h4');
-    header.innerText = "Place your device in the box and close the cover";
-    modal_header.appendChild(header);
+    const modal_title = document.querySelector('.modal-title');
+    modal_title.innerText = "Box Locking";
 
-    const field = document.querySelector('.modal-field');
+    const form = document.querySelector('.modal-form');
+    const text = document.createElement('p');
+    text.innerText = "Place your device in the box and close the cover";
+    form.appendChild(text);
+
     const buttonDiv = document.createElement('div');
-    buttonDiv.classList.add('modal-locking-div');
+    buttonDiv.classList.add('d-flex','flex-row-reverse');
 
-    const confirmButton = document.createElement('button');
-    confirmButton.classList.add('modal-locking-button');
-    confirmButton.innerText = "Confirm";
-    confirmButton.addEventListener('click', async (event) => {
+    const confirm = document.createElement('button');
+    confirm.classList.add('btn','btn-primary');
+    confirm.setAttribute('data-bs-dismiss', 'modal');
+    confirm.innerText = "Confirm";
+    confirm.addEventListener('click', async (event) => {
         event.preventDefault();
-        const dialog = document.querySelector('.modal');
-        //console.log('Locking...');
         if(!boxConnection.isConnected()) {
-            alert('Box disconnected! Returning to main menu.');
-            dialog.close();
-            loginMenu();
-            return;
+            alert('Box disconnected!');
         }
-        //set delay according to time for solenoid to extend
-        boxConnection.lock();
-        dialog.close();
-        lockedView();
-        setTimeout(lockedView, 5 * 1000);
+        else {
+            //Display locked screen
+            clear(content);
+            boxConnection.lock();
+            lockedView();
+        }
+        
     }, { once: true });
 
-    buttonDiv.appendChild(confirmButton);
-    field.appendChild(buttonDiv);
+    buttonDiv.appendChild(confirm);
+    form.appendChild(buttonDiv);
 }
 
 //Screen while locked
 async function lockedView() {
     //console.log("course, assignment, name:", currentUser.getCourseId(), currentUser.getAssignmentId(), currentUser.getAssignmentName());
 
-    clear(content);
     //Track current number of submissions
     const currentSubmissions = await getSubmissions(currentUser.getUrl(), currentUser.getKey(), currentUser.getCourseId(), currentUser.getAssignmentId());
     console.log(currentSubmissions);
+    console.log("current submissions:", currentSubmissions.attempt)
 
     //Display current assignment and add button
     const lock_div = document.createElement('div');
-    lock_div.classList.add('lock-screen-div');
+    lock_div.classList.add('container-fluid', 'd-flex', 'flex-column', 'col-6');
 
     const lock_header = document.createElement('h4');
-    lock_header.classList.add('lock-screen-header');
+    lock_header.classList.add('mx-0', 'my-4', 'text-center');
     lock_header.innerText = 'Current assignment:';
 
     const assignment_name = document.createElement('h1');
-    assignment_name.classList.add('lock-screen-name');
+    assignment_name.classList.add('mx-0', 'mb-5', 'text-center');
     assignment_name.innerText = `${currentUser.getAssignmentName()}`;
 
     const completion_button = document.createElement('button');
-    completion_button.classList.add('lock-screen-button');
+    completion_button.classList.add('btn', 'btn-outline-success', 'col-6', 'offset-md-3');
     completion_button.innerText = 'Assignment Completed';
-    completion_button.addEventListener('click', async () => {
+    completion_button.addEventListener('click', async (event) => {
         //Check completion
         const submissionCount = await getSubmissions(currentUser.getUrl(), currentUser.getKey(), currentUser.getCourseId(), currentUser.getAssignmentId());
-        console.log('submissions: ', submissionCount);
+        console.log('submissions: ', submissionCount.count);
         //If submission count hasn't changed, the current session has not been completed
         if(submissionCount.attempt === currentSubmissions.attempt) {
             console.log('incomplete');
@@ -469,6 +460,7 @@ async function lockedView() {
         } 
         else {
             console.log('assignment complete');
+            alert('Congrauations on completing your assignment!');
             boxConnection.unlock();
             //Return to assignment screen
             if(boxConnection.isConnected()) {
@@ -479,7 +471,7 @@ async function lockedView() {
                 loginMenu();
             }
         }
-    }, {once: true})
+    })
 
     lock_div.appendChild(lock_header);
     lock_div.appendChild(assignment_name);
@@ -495,37 +487,56 @@ async function lockedView() {
 function connectionMonitor() {
     var connected = false;
     var port;
+    var fail = false;
     const connect = async () => {
-        connected = true;
+        //Prompt user for port connection
         port = await navigator.serial.requestPort();
         const ports = await navigator.serial.getPorts();
         console.log(port);
-        console.log(ports);
+        console.log('readable: ',port.readable);
+        //console.log(ports);
         if(port.readable || port.writable) {
             await port.close();
         }
-        await port.open({baudRate: 115200});
-        unlock();
-        refreshHeader();
+        //Open connection with port, if error, do not toggle connection
+        await port.open({baudRate: 115200})
+        .catch((err) => {
+            console.log('connection failed');
+            fail = true;
+        })
+        .then(() => {
+            if(!fail) {
+                console.log('connection successful');
+                connected = true;
+                unlock();
+                updateConnectionIndicator();
+            }
+        });        
     }
     const disconnect = () => {
         connected = false;
         unlock();
-        refreshHeader();
+        updateConnectionIndicator();
     }
     const lock = async () => {
-        console.log(port);
-        const encoder = new TextEncoder();
-        const writer = port.writable.getWriter();
-        await writer.write(encoder.encode('1'));
-        writer.releaseLock();
+        //console.log(port);
+        //Write '1' to the device
+        if(connected) {
+            const encoder = new TextEncoder();
+            const writer = port.writable.getWriter();
+            await writer.write(encoder.encode('1'));
+            writer.releaseLock();
+        }
     }
     const unlock = async () => {
-        console.log(port);
-        const encoder = new TextEncoder();
-        const writer = port.writable.getWriter();
-        await writer.write(encoder.encode('0'));
-        writer.releaseLock();
+        //console.log(port);
+        //Write '0' to the device
+        if(connected) {
+            const encoder = new TextEncoder();
+            const writer = port.writable.getWriter();
+            await writer.write(encoder.encode('0'));
+            writer.releaseLock();
+        }
     }
     const isConnected = () => {return connected};
     return { connect, disconnect, isConnected, lock, unlock };
@@ -595,15 +606,6 @@ function clear(parent) {
 
 //Clears modal contents
 function clearModal(){ 
-    clear(document.querySelector('.modal-header'));
-    clear(document.querySelector('.modal-field'));
+    clear(document.querySelector('.modal-form'));
 }
-
-//Update changes in header
-function refreshHeader() {
-    clear(header);
-    updateConnectionIndicator();
-    if(currentUser.getName() != "") addUser();
-}
-
 

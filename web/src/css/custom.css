@@ -1,0 +1,7 @@
+body {
+    height:92vh;
+}
+.content {
+    max-height:75vh;
+    overflow-y: scroll;
+}
