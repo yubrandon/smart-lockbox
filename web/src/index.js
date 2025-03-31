@@ -265,7 +265,7 @@ async function assignmentView(courseData) {
                 select_div.appendChild(select_btn);
 
                 //Add button to body and then add to item
-                body.appendChild(select_btn);
+                body.appendChild(select_div);
                 desc.appendChild(body);
                 item.appendChild(desc);
                 accordion.appendChild(item);
@@ -364,7 +364,7 @@ async function confirmationModal(assignment) {
     const cancel = document.createElement('button');
     cancel.type = "button";
     cancel.classList.add('btn', 'btn-secondary');
-    cancel.setAttribute("data-dismiss", "modal");
+    cancel.setAttribute("data-bs-dismiss", "modal");
     cancel.innerText = "Close";
 
     const confirm = document.createElement('button');
@@ -393,41 +393,42 @@ function promptLocking() {
 
     //Change header title
     const modal_title = document.querySelector('.modal-title');
-    modal_title.innerText = "Place your device in the box and close the cover";
+    modal_title.innerText = "Box Locking";
 
-    const field = document.querySelector('.modal-field');
+    const form = document.querySelector('.modal-form');
+    const text = document.createElement('p');
+    text.innerText = "Place your device in the box and close the cover";
+    form.appendChild(text);
+
     const buttonDiv = document.createElement('div');
-    buttonDiv.classList.add('modal-locking-div');
+    buttonDiv.classList.add('d-flex','flex-row-reverse');
 
-    const confirmButton = document.createElement('button');
-    confirmButton.classList.add('modal-locking-button');
-    confirmButton.innerText = "Confirm";
-    confirmButton.addEventListener('click', async (event) => {
+    const confirm = document.createElement('button');
+    confirm.classList.add('btn','btn-primary');
+    confirm.setAttribute('data-bs-dismiss', 'modal');
+    confirm.innerText = "Confirm";
+    confirm.addEventListener('click', async (event) => {
         event.preventDefault();
-        const dialog = document.querySelector('.modal');
-        //console.log('Locking...');
         if(!boxConnection.isConnected()) {
-            alert('Box disconnected! Returning to main menu.');
-            dialog.close();
-            loginMenu();
-            return;
+            alert('Box disconnected!');
         }
-        //set delay according to time for solenoid to extend
-        boxConnection.lock();
-        dialog.close();
-        lockedView();
-        setTimeout(lockedView, 5 * 1000);
+        else {
+        //Set delay according to time for solenoid to extend
+            clear(content);
+            boxConnection.lock();
+            setTimeout(lockedView, 5 * 1000);
+        }
+        
     }, { once: true });
 
-    buttonDiv.appendChild(confirmButton);
-    field.appendChild(buttonDiv);
+    buttonDiv.appendChild(confirm);
+    form.appendChild(buttonDiv);
 }
 
 //Screen while locked
 async function lockedView() {
     //console.log("course, assignment, name:", currentUser.getCourseId(), currentUser.getAssignmentId(), currentUser.getAssignmentName());
 
-    clear(content);
     //Track current number of submissions
     const currentSubmissions = await getSubmissions(currentUser.getUrl(), currentUser.getKey(), currentUser.getCourseId(), currentUser.getAssignmentId());
     console.log(currentSubmissions);
