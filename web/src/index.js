@@ -413,10 +413,10 @@ function promptLocking() {
             alert('Box disconnected!');
         }
         else {
-        //Set delay according to time for solenoid to extend
+            //Display locked screen
             clear(content);
             boxConnection.lock();
-            setTimeout(lockedView, 5 * 1000);
+            lockedView();
         }
         
     }, { once: true });
@@ -432,26 +432,27 @@ async function lockedView() {
     //Track current number of submissions
     const currentSubmissions = await getSubmissions(currentUser.getUrl(), currentUser.getKey(), currentUser.getCourseId(), currentUser.getAssignmentId());
     console.log(currentSubmissions);
+    console.log("current submissions:", currentSubmissions.attempt)
 
     //Display current assignment and add button
     const lock_div = document.createElement('div');
-    lock_div.classList.add('lock-screen-div');
+    lock_div.classList.add('container-fluid', 'd-flex', 'flex-column', 'col-6');
 
     const lock_header = document.createElement('h4');
-    lock_header.classList.add('lock-screen-header');
+    lock_header.classList.add('mx-0', 'my-4', 'text-center');
     lock_header.innerText = 'Current assignment:';
 
     const assignment_name = document.createElement('h1');
-    assignment_name.classList.add('lock-screen-name');
+    assignment_name.classList.add('mx-0', 'mb-5', 'text-center');
     assignment_name.innerText = `${currentUser.getAssignmentName()}`;
 
     const completion_button = document.createElement('button');
-    completion_button.classList.add('lock-screen-button');
+    completion_button.classList.add('btn', 'btn-outline-success', 'col-6', 'offset-md-3');
     completion_button.innerText = 'Assignment Completed';
-    completion_button.addEventListener('click', async () => {
+    completion_button.addEventListener('click', async (event) => {
         //Check completion
         const submissionCount = await getSubmissions(currentUser.getUrl(), currentUser.getKey(), currentUser.getCourseId(), currentUser.getAssignmentId());
-        console.log('submissions: ', submissionCount);
+        console.log('submissions: ', submissionCount.count);
         //If submission count hasn't changed, the current session has not been completed
         if(submissionCount.attempt === currentSubmissions.attempt) {
             console.log('incomplete');
@@ -459,6 +460,7 @@ async function lockedView() {
         } 
         else {
             console.log('assignment complete');
+            alert('Congrauations on completing your assignment!');
             boxConnection.unlock();
             //Return to assignment screen
             if(boxConnection.isConnected()) {
@@ -469,7 +471,7 @@ async function lockedView() {
                 loginMenu();
             }
         }
-    }, {once: true})
+    })
 
     lock_div.appendChild(lock_header);
     lock_div.appendChild(assignment_name);
