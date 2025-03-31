@@ -120,6 +120,7 @@ function addUser() {
     logout.innerText = 'Log out';
     logout.addEventListener('click', () => {
         currentUser.clearName();
+        boxConnection.unlock();
         clear(header_info);
         loginMenu();
 
