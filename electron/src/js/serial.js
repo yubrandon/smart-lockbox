@@ -2,6 +2,7 @@
 async function connectSerial() {
     const port = await navigator.serial.requestPort();
     const ports = await navigator.serial.getPorts();
+    console.log("Test");
     console.log(port);
     console.log(ports);
     if(port.readable || port.writable) {

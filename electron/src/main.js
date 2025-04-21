@@ -14,10 +14,11 @@ const createWindow = () => {
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
-      //preload: path.join(__dirname, 'preload.js'),  was not able to get preload imports to work properly
+      //preload: path.join(__dirname, 'preload.js') ,was not able to get preload imports to work properly
     },
   });
-
+  
+  //mainWindow.loadURL('http://localhost:3000');
   // and load the index.html of the app.
   mainWindow.loadURL('file://' + __dirname + '/index.html');
   // Open the DevTools.

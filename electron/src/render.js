@@ -98,8 +98,8 @@ function loginMenu() {
 }
 loginMenu();
 
+clear(footer);
 (function bluetoothButton(){
-    clear(footer);
     //Create div
     const bluetooth_div = document.createElement('div');
     bluetooth_div.classList.add('bluetooth-div');
@@ -127,6 +127,92 @@ loginMenu();
     //Append div to footer
     footer.appendChild(bluetooth_div);
 
+})();
+
+(function connectBtn(){
+    //create div
+    const connect_div = document.createElement('div');
+    connect_div.classList.add('connect-div');
+    //Create button
+    const connect_btn = document.createElement('button');
+    connect_btn.classList.add('connect-button');
+    connect_btn.innerText = "Connect";
+    connect_btn.id = 'connect-button';
+
+    // Blah
+    connect_btn.addEventListener('click', async () => {
+        console.log('Connect button clicked');
+        const connectBtn = document.getElementById('connect-button');
+        const disconnectBtn = document.getElementById('disconnect-button');
+
+        connectBtn.disabled = true;
+        connectBtn.innerText = 'Connecting...';
+
+        try {
+            const device = await navigator.bluetooth.requestDevice({
+                filters: [{ services: [0x180E] }],
+                optionalServices: ['battery_service']
+            });
+
+            console.log('Connected to device: ' + device.name);
+
+            const server = await device.gatt.connect();
+            console.log('Connected to GATT server');
+
+            disconnectBtn.disabled = false;
+            connectBtn.disabled = true;
+            connectBtn.innerText = 'Connected';
+
+            device.addEventListener('gattserverdisconnected', () => {
+                console.log('Device disconnected');
+                disconnectBtn.disabled = true;
+                connectBtn.disabled = false;
+                connectBtn.innerText = 'Connect';
+            });
+
+            window.currentBLEDevice = device;
+
+        } catch (error) {
+            if (error instanceof DOMException && error.name === 'NotFoundError') {
+                console.log('User canceled the Bluetooth device selection');
+            } else {
+                console.error('Error: ', error);
+            }
+
+            connectBtn.disabled = false;
+            connectBtn.innerText = 'Connect';
+        }
+    });
+    //Blah
+
+    //Append button to div
+    connect_div.appendChild(connect_btn);
+    //Append div to footer
+    footer.appendChild(connect_div);
+})();
+
+(function disconnectBtn(){
+    //create div
+    const disconnect_div = document.createElement('div');
+    disconnect_div.classList.add('disconnect-div');
+    //Create button
+    const disconnect_btn = document.createElement('button');
+    disconnect_btn.classList.add('disconnect-button');
+    disconnect_btn.innerText = "Disconnect";
+    disconnect_btn.id = 'disconnect-button';
+
+    //blah
+    disconnect_btn.addEventListener('click', () => {
+        if (window.currentBLEDevice && window.currentBLEDevice.gatt.connected) {
+            window.currentBLEDevice.gatt.disconnect();
+            console.log('Manually disconnected from device.');
+        }
+    });
+
+    //Append button to div
+    disconnect_div.appendChild(disconnect_btn);
+    //Append div to footer
+    footer.appendChild(disconnect_div);
 })();
 
 //Display name of logged in user at top
