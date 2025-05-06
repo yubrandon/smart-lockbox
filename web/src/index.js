@@ -73,6 +73,7 @@ function loginMenu() {
 }
 loginMenu();
 
+/*
 const footer = document.querySelector('.footer');
 clear(footer);
 (function connectBtn(){
@@ -95,11 +96,11 @@ clear(footer);
         connectBtn.innerText = 'Connecting...';
 
         try {
-            /*
+            
             const device = await navigator.bluetooth.requestDevice({
                 filters: [{ services: [0x180E] }],
                 optionalServices: ['battery_service']
-            }); */
+            }); 
 
             // Unsure what the microcontroller would be so just set it acceptAllDevices
             const device = await navigator.bluetooth.requestDevice({
@@ -113,6 +114,7 @@ clear(footer);
             const server = await device.gatt.connect();
             console.log('Connected to GATT server');
 
+
             disconnectBtn.disabled = false;
             connectBtn.disabled = true;
             connectBtn.innerText = 'Connected';
@@ -120,6 +122,7 @@ clear(footer);
             // EventListener for 
             device.addEventListener('gattserverdisconnected', () => {
                 console.log('Device disconnected');
+                boxConnection.disconnect();
                 disconnectBtn.disabled = true;
                 connectBtn.disabled = false;
                 connectBtn.innerText = 'Connect';
@@ -145,7 +148,9 @@ clear(footer);
     //Append div to footer
     footer.appendChild(connect_div);
 })();
+*/
 
+/*
 (function disconnectBtn(){
     //create div
     const disconnect_div = document.createElement('div');
@@ -157,7 +162,8 @@ clear(footer);
     disconnect_btn.id = 'disconnect-button';
 
     disconnect_btn.addEventListener('click', () => {
-        if (window.currentBLEDevice && window.currentBLEDevice.gatt.connected) {
+        if (window.currentBLEDevice && window.currentBLEDevice.gatt.connected && boxConnection.isConnected()) {
+            boxConnection.disconnect();
             window.currentBLEDevice.gatt.disconnect();
             console.log('Manually disconnected from device.');
         }
@@ -168,7 +174,8 @@ clear(footer);
     //Append div to footer
     footer.appendChild(disconnect_div);
 })();
-/*
+*/
+
 (function bluetoothButton(){
     const footer = document.querySelector('.footer');
     clear(footer);
@@ -176,8 +183,13 @@ clear(footer);
     const bluetooth_btn = document.createElement('button');
     bluetooth_btn.classList.add('bluetooth-button', 'btn', 'btn-outline-primary', 'border', 'border-dark');
     bluetooth_btn.addEventListener('click', () => {
-        if(boxConnection.isConnected()) boxConnection.disconnect();
-        else boxConnection.connect();
+        if(window.currentBLEDevice && window.currentBLEDevice.gatt.connected && boxConnection.isConnected()) {
+            boxConnection.disconnect();
+            window.currentBLEDevice.gatt.disconnect();
+            console.log('Manually disconnected from device.');
+        } else {
+            boxConnection.connect();
+        }
     })
     const content_div = document.createElement('div');
     content_div.classList.add('p-2', 'd-flex', 'flex-row','align-items-center');
@@ -197,7 +209,7 @@ clear(footer);
     footer.appendChild(bluetooth_btn);
 
 })();
-*/
+
 
 //Display name of logged in user at top
 function addUser() {
@@ -586,30 +598,53 @@ function connectionMonitor() {
     var connected = false;
     var port;
     var fail = false;
+    var device;
+    var server;
+    var service;
+    var characteristic
     const connect = async () => {
-        //Prompt user for port connection
-        port = await navigator.serial.requestPort();
-        const ports = await navigator.serial.getPorts();
-        console.log(port);
-        console.log('readable: ',port.readable);
-        //console.log(ports);
-        if(port.readable || port.writable) {
-            await port.close();
-        }
-        //Open connection with port, if error, do not toggle connection
-        await port.open({baudRate: 115200})
-        .catch((err) => {
-            console.log('connection failed');
-            fail = true;
-        })
-        .then(() => {
-            if(!fail) {
-                console.log('connection successful');
-                connected = true;
-                unlock();
-                updateConnectionIndicator();
+        try {
+            /*
+            const device = await navigator.bluetooth.requestDevice({
+                filters: [{ services: [0x180E] }],
+                optionalServices: ['battery_service']
+            }); */
+
+            // Unsure what the microcontroller would be so just set it acceptAllDevices
+            device = await navigator.bluetooth.requestDevice({
+                // filters: [...] <- Prefer filters to save energy & show relevant devices.
+                // acceptAllDevices here ensures dialog can populate, we don't care with what.
+                acceptAllDevices: true,
+                optionalServices: [0x2700] //service id
+            });
+
+            console.log('Connected to device: ' + device.name);
+
+            server = await device.gatt.connect();
+            console.log('Connected to GATT server');
+
+            connected = true;
+            unlock();
+            updateConnectionIndicator();
+
+            // EventListener for 
+            device.addEventListener('gattserverdisconnected', () => {
+                console.log('Device disconnected');
+                boxConnection.disconnect();
+            });
+
+            window.currentBLEDevice = device;
+
+        // Any interruption before the the async is finished (changing focus of window)
+        } catch (error) {
+            if (error instanceof DOMException && error.name === 'NotFoundError') {
+                console.log('User canceled the Bluetooth device selection');
+                boxConnection.disconnect();
+            } else {
+                console.error('Error: ', error);
+                boxConnection.disconnect();
             }
-        });        
+        }      
     }
     const disconnect = () => {
         connected = false;
@@ -620,20 +655,34 @@ function connectionMonitor() {
         //console.log(port);
         //Write '1' to the device
         if(connected) {
+            /*
             const encoder = new TextEncoder();
             const writer = port.writable.getWriter();
             await writer.write(encoder.encode('1'));
             writer.releaseLock();
+            */
+            service = await server.getPrimaryService(0x2700);
+            characteristic = await service.getCharacteristic('6E400003-B5A3-F393-E0A9-E50E24DCCA9E');
+            const encoder = new TextEncoder();
+            const value = encoder.encode('1');
+            await characteristic.writeValue(value);
         }
     }
     const unlock = async () => {
         //console.log(port);
         //Write '0' to the device
         if(connected) {
+            /*
             const encoder = new TextEncoder();
             const writer = port.writable.getWriter();
             await writer.write(encoder.encode('0'));
             writer.releaseLock();
+            */
+            service = await server.getPrimaryService(0x2700);
+            characteristic = await service.getCharacteristic('6E400003-B5A3-F393-E0A9-E50E24DCCA9E');
+            const encoder = new TextEncoder();
+            const value = encoder.encode('0');
+            await characteristic.writeValue(value);
         }
     }
     const isConnected = () => {return connected};
