@@ -1,9 +1,9 @@
 # CMPE 195 Lockbox Project
 
 
-## Testing
-### Web
+## Setup
 ```
+npm install
 npm run watch
 ```
 Run chrome using the following line and open localhost in its window:
