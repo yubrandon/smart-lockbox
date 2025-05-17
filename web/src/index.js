@@ -75,7 +75,7 @@ loginMenu();
 
 const footer = document.querySelector('.footer');
 clear(footer);
-(function connectBtn(){
+/*(function connectBtn(){
     //create div
     const connect_div = document.createElement('div');
     connect_div.classList.add('connect-div');
@@ -95,11 +95,11 @@ clear(footer);
         connectBtn.innerText = 'Connecting...';
 
         try {
-            /*
+            
             const device = await navigator.bluetooth.requestDevice({
                 filters: [{ services: [0x180E] }],
                 optionalServices: ['battery_service']
-            }); */
+            }); 
 
             // Unsure what the microcontroller would be so just set it acceptAllDevices
             const device = await navigator.bluetooth.requestDevice({
@@ -144,7 +144,7 @@ clear(footer);
     connect_div.appendChild(connect_btn);
     //Append div to footer
     footer.appendChild(connect_div);
-})();
+})();*/
 
 (function disconnectBtn(){
     //create div
@@ -300,7 +300,7 @@ async function assignmentView(courseData) {
         const accordion_div = document.createElement('div');
         accordion_div.classList.add('accordion-div', 'me-1', 'pb-3');
         const header = document.createElement('h2');
-        header.innerText = "Course:" + course.name;
+        header.innerText = "Course: " + course.name;
         header.classList.add('m-0', 'border-bottom', 'border-dark');
         accordion_div.appendChild(header);
 
