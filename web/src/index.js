@@ -75,6 +75,101 @@ function loginMenu() {
 }
 loginMenu();
 
+const footer = document.querySelector('.footer');
+clear(footer);
+/*(function connectBtn(){
+    //create div
+    const connect_div = document.createElement('div');
+    connect_div.classList.add('connect-div');
+    //Create button
+    const connect_btn = document.createElement('button');
+    connect_btn.classList.add('connect-button');
+    connect_btn.innerText = "Connect";
+    connect_btn.id = 'connect-button';
+
+    //EventListener for click
+    connect_btn.addEventListener('click', async () => {
+        console.log('Connect button clicked');
+        const connectBtn = document.getElementById('connect-button');
+        const disconnectBtn = document.getElementById('disconnect-button');
+
+        connectBtn.disabled = true;
+        connectBtn.innerText = 'Connecting...';
+
+        try {
+            
+            const device = await navigator.bluetooth.requestDevice({
+                filters: [{ services: [0x180E] }],
+                optionalServices: ['battery_service']
+            }); 
+
+            // Unsure what the microcontroller would be so just set it acceptAllDevices
+            const device = await navigator.bluetooth.requestDevice({
+                // filters: [...] <- Prefer filters to save energy & show relevant devices.
+                // acceptAllDevices here ensures dialog can populate, we don't care with what.
+                acceptAllDevices: true
+            });
+
+            console.log('Connected to device: ' + device.name);
+
+            const server = await device.gatt.connect();
+            console.log('Connected to GATT server');
+
+            disconnectBtn.disabled = false;
+            connectBtn.disabled = true;
+            connectBtn.innerText = 'Connected';
+
+            // EventListener for 
+            device.addEventListener('gattserverdisconnected', () => {
+                console.log('Device disconnected');
+                disconnectBtn.disabled = true;
+                connectBtn.disabled = false;
+                connectBtn.innerText = 'Connect';
+            });
+
+            window.currentBLEDevice = device;
+
+        // Any interruption before the the async is finished (changing focus of window)
+        } catch (error) {
+            if (error instanceof DOMException && error.name === 'NotFoundError') {
+                console.log('User canceled the Bluetooth device selection');
+            } else {
+                console.error('Error: ', error);
+            }
+
+            connectBtn.disabled = false;
+            connectBtn.innerText = 'Connect';
+        }
+    });
+
+    //Append button to div
+    connect_div.appendChild(connect_btn);
+    //Append div to footer
+    footer.appendChild(connect_div);
+})();*/
+
+(function disconnectBtn(){
+    //create div
+    const disconnect_div = document.createElement('div');
+    disconnect_div.classList.add('disconnect-div');
+    //Create button
+    const disconnect_btn = document.createElement('button');
+    disconnect_btn.classList.add('disconnect-button');
+    disconnect_btn.innerText = "Disconnect";
+    disconnect_btn.id = 'disconnect-button';
+
+    disconnect_btn.addEventListener('click', () => {
+        if (window.currentBLEDevice && window.currentBLEDevice.gatt.connected) {
+            window.currentBLEDevice.gatt.disconnect();
+            console.log('Manually disconnected from device.');
+        }
+    });
+
+    //Append button to div
+    disconnect_div.appendChild(disconnect_btn);
+    //Append div to footer
+    footer.appendChild(disconnect_div);
+})();
 (function bluetoothButton(){
     const footer = document.querySelector('.footer');
     clear(footer);
@@ -213,7 +308,7 @@ async function assignmentView(courseData) {
         const accordion_div = document.createElement('div');
         accordion_div.classList.add('accordion-div', 'me-1', 'pb-3');
         const header = document.createElement('h2');
-        header.innerText = "Course:" + course.name;
+        header.innerText = "Course: " + course.name;
         header.classList.add('m-0', 'border-bottom', 'border-dark');
         accordion_div.appendChild(header);
 
