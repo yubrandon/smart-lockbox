@@ -2,6 +2,7 @@
 
 
 ## Setup
+Inside the `web` directory
 ```
 npm install
 npm run watch
