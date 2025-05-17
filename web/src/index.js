@@ -5,6 +5,8 @@ import { getCourses, getUser, getSubmissions, getCoursework } from './js/api.js'
 const boxConnection = connectionMonitor();
 const currentUser = userInfo();
 
+const SERVICE_UUID =        "12345678-1234-1234-1234-1234567890ab";
+const CHARACTERISTIC_UUID = "abcdefab-1234-5678-1234-abcdefabcdef";
 
 //
 //  UI/MENU
@@ -168,16 +170,21 @@ clear(footer);
     //Append div to footer
     footer.appendChild(disconnect_div);
 })();
-/*
 (function bluetoothButton(){
     const footer = document.querySelector('.footer');
     clear(footer);
     //Create button
     const bluetooth_btn = document.createElement('button');
     bluetooth_btn.classList.add('bluetooth-button', 'btn', 'btn-outline-primary', 'border', 'border-dark');
-    bluetooth_btn.addEventListener('click', () => {
-        if(boxConnection.isConnected()) boxConnection.disconnect();
-        else boxConnection.connect();
+    bluetooth_btn.addEventListener('click', async () => {
+        // if not connected, then connect
+        if(!boxConnection.isConnected()) {
+            await boxConnection.connect();
+            boxConnection.lock();
+        } else { // if connected, disconnect
+            await boxConnection.unlock();
+            boxConnection.disconnect();
+        }
     })
     const content_div = document.createElement('div');
     content_div.classList.add('p-2', 'd-flex', 'flex-row','align-items-center');
@@ -197,7 +204,7 @@ clear(footer);
     footer.appendChild(bluetooth_btn);
 
 })();
-*/
+
 
 //Display name of logged in user at top
 function addUser() {
@@ -218,6 +225,7 @@ function addUser() {
     logout.addEventListener('click', () => {
         currentUser.clearName();
         boxConnection.unlock();
+        boxConnection.disconnect();
         clear(header_info);
         loginMenu();
 
@@ -581,61 +589,74 @@ async function lockedView() {
 
 
 // DATA OBJECTS
-//Connection management
+// Connection management
 function connectionMonitor() {
     var connected = false;
-    var port;
-    var fail = false;
-    const connect = async () => {
-        //Prompt user for port connection
-        port = await navigator.serial.requestPort();
-        const ports = await navigator.serial.getPorts();
-        console.log(port);
-        console.log('readable: ',port.readable);
-        //console.log(ports);
-        if(port.readable || port.writable) {
-            await port.close();
+    let bleDevice;
+    let bleCharacteristic;
+    async function connect() {
+        try {
+            console.log("Requesting Bluetooth device...");
+            bleDevice = await navigator.bluetooth.requestDevice({
+                filters: [{ name: 'LockBox' }],
+                optionalServices: [SERVICE_UUID]
+            });
+
+            const server = await bleDevice.gatt.connect();
+            const service = await server.getPrimaryService(SERVICE_UUID);
+            bleCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
+            await bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
+            console.log("Connected to BLE device");
+
+            // Update status variables
+            connected = true;
+            updateConnectionIndicator();
+        } catch (error) {
+            console.error("Connection failed", error);
         }
-        //Open connection with port, if error, do not toggle connection
-        await port.open({baudRate: 115200})
-        .catch((err) => {
-            console.log('connection failed');
-            fail = true;
-        })
-        .then(() => {
-            if(!fail) {
-                console.log('connection successful');
-                connected = true;
-                unlock();
-                updateConnectionIndicator();
-            }
-        });        
     }
-    const disconnect = () => {
+    function disconnect() {
         connected = false;
-        unlock();
         updateConnectionIndicator();
-    }
-    const lock = async () => {
-        //console.log(port);
-        //Write '1' to the device
-        if(connected) {
-            const encoder = new TextEncoder();
-            const writer = port.writable.getWriter();
-            await writer.write(encoder.encode('1'));
-            writer.releaseLock();
+        if (!bleDevice) {
+            console.log("No BLE device to disconnect");
+            return;
+        }
+
+        if (bleDevice.gatt.connected) {
+            bleDevice.gatt.disconnect();
+            console.log("Device disconnected");
+        } else {
+            console.log("Device already disconnected");
         }
     }
-    const unlock = async () => {
-        //console.log(port);
-        //Write '0' to the device
-        if(connected) {
-            const encoder = new TextEncoder();
-            const writer = port.writable.getWriter();
-            await writer.write(encoder.encode('0'));
-            writer.releaseLock();
-        }
+
+    function onDisconnected(event) {
+        console.log("BLE device disconnected");
+        bleCharacteristic = null;
+        bleDevice = null;
     }
+    // Make sure you connect() first
+    async function lock() {
+        sendCommand(1);
+    }
+    // Make sure you connect() first
+    async function unlock() {
+        sendCommand(0);
+    }
+    async function sendCommand(value) {
+        if (!bleCharacteristic) {
+            console.error("BLE device not connected");
+            return;
+        }
+
+        // Send string "1" or "0" as byte
+        // 1 = lock; 0 = unlock
+        const encoder = new TextEncoder();
+        await bleCharacteristic.writeValue(encoder.encode(value.toString()));
+        console.log("Sent:", value);
+    }
+
     const isConnected = () => {return connected};
     return { connect, disconnect, isConnected, lock, unlock };
 }
